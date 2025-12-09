@@ -4,11 +4,25 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
+/**
+ * Model User (Pengguna)
+ * 
+ * Sistem autentikasi dan otorisasi untuk SIPKUD
+ * Mendukung 3 role: Super Admin PMD, Admin Desa, Executive View
+ * 
+ * Catatan: Modul-modul berikut akan dikembangkan di fase selanjutnya:
+ * - Pinjaman
+ * - Kas
+ * - Jurnal (Akuntansi)
+ * - Aset
+ * - Pelaporan
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -20,9 +34,12 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name',
+        'nama',
         'email',
         'password',
+        'role',
+        'kecamatan_id',
+        'desa_id',
     ];
 
     /**
@@ -47,7 +64,24 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'role' => 'string',
         ];
+    }
+
+    /**
+     * Relasi ke kecamatan
+     */
+    public function kecamatan(): BelongsTo
+    {
+        return $this->belongsTo(Kecamatan::class);
+    }
+
+    /**
+     * Relasi ke desa
+     */
+    public function desa(): BelongsTo
+    {
+        return $this->belongsTo(Desa::class);
     }
 
     /**
@@ -55,10 +89,42 @@ class User extends Authenticatable
      */
     public function initials(): string
     {
-        return Str::of($this->name)
+        return Str::of($this->nama)
             ->explode(' ')
             ->take(2)
             ->map(fn ($word) => Str::substr($word, 0, 1))
             ->implode('');
+    }
+
+    /**
+     * Check if user is Super Admin
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'super_admin';
+    }
+
+    /**
+     * Check if user is Admin Desa
+     */
+    public function isAdminDesa(): bool
+    {
+        return $this->role === 'admin_desa';
+    }
+
+    /**
+     * Check if user is Executive View
+     */
+    public function isExecutiveView(): bool
+    {
+        return $this->role === 'executive_view';
+    }
+
+    /**
+     * Check if user has read-only access
+     */
+    public function isReadOnly(): bool
+    {
+        return $this->isExecutiveView();
     }
 }
