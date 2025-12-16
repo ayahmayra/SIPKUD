@@ -114,12 +114,15 @@
                     <tr class="border-b border-zinc-200 dark:border-zinc-700">
                         <th class="px-4 py-3 text-left text-sm font-semibold">No</th>
                         <th class="px-4 py-3 text-left text-sm font-semibold">Nama</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold">NIK</th>
                         <th class="px-4 py-3 text-left text-sm font-semibold">Kelompok</th>
                         @if(auth()->user()->isSuperAdmin())
                             <th class="px-4 py-3 text-left text-sm font-semibold">Kecamatan</th>
                             <th class="px-4 py-3 text-left text-sm font-semibold">Desa</th>
                         @endif
                         <th class="px-4 py-3 text-left text-sm font-semibold">Alamat</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold">Nomor HP</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold">Jenis Kelamin</th>
                         <th class="px-4 py-3 text-left text-sm font-semibold">Tanggal Gabung</th>
                         <th class="px-4 py-3 text-left text-sm font-semibold">Status</th>
                         <th class="px-4 py-3 text-right text-sm font-semibold">Aksi</th>
@@ -131,6 +134,9 @@
                             <td class="px-4 py-3 text-sm">{{ $anggota->firstItem() + $loop->index }}</td>
                             <td class="px-4 py-3 text-sm">
                                 <div class="font-medium">{{ $item->nama }}</div>
+                            </td>
+                            <td class="px-4 py-3 text-sm">
+                                <div class="font-mono text-sm">{{ $item->nik ?? '-' }}</div>
                             </td>
                             <td class="px-4 py-3 text-sm">
                                 <flux:badge>{{ $item->kelompok->nama_kelompok ?? '-' }}</flux:badge>
@@ -147,6 +153,18 @@
                                 <div class="max-w-xs truncate text-zinc-600 dark:text-zinc-400">
                                     {{ $item->alamat ?? '-' }}
                                 </div>
+                            </td>
+                            <td class="px-4 py-3 text-sm">
+                                {{ $item->nomor_hp ?? '-' }}
+                            </td>
+                            <td class="px-4 py-3 text-sm">
+                                @if($item->jenis_kelamin)
+                                    <flux:badge :variant="$item->jenis_kelamin === 'L' ? 'primary' : 'pink'">
+                                        {{ $item->jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan' }}
+                                    </flux:badge>
+                                @else
+                                    <span class="text-zinc-500 dark:text-zinc-400">-</span>
+                                @endif
                             </td>
                             <td class="px-4 py-3 text-sm">
                                 {{ $item->tanggal_gabung ? $item->tanggal_gabung->format('d/m/Y') : '-' }}
@@ -184,7 +202,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ auth()->user()->isSuperAdmin() ? '9' : '7' }}" class="px-4 py-8 text-center text-sm text-zinc-600 dark:text-zinc-400">
+                            <td colspan="{{ auth()->user()->isSuperAdmin() ? '12' : '10' }}" class="px-4 py-8 text-center text-sm text-zinc-600 dark:text-zinc-400">
                                 Tidak ada data anggota ditemukan.
                             </td>
                         </tr>

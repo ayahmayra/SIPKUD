@@ -13,7 +13,10 @@ use Livewire\Component;
 class Create extends Component
 {
     public string $nama = '';
+    public string $nik = '';
     public ?string $alamat = null;
+    public ?string $nomor_hp = null;
+    public ?string $jenis_kelamin = null;
     public ?int $kelompok_id = null;
     public ?string $tanggal_gabung = null;
     public string $status = 'aktif';
@@ -28,12 +31,21 @@ class Create extends Component
     {
         $validated = $this->validate([
             'nama' => ['required', 'string', 'max:255'],
+            'nik' => ['required', 'string', 'size:16', 'regex:/^[0-9]{16}$/', 'unique:anggota,nik'],
             'alamat' => ['nullable', 'string'],
+            'nomor_hp' => ['nullable', 'string', 'max:20', 'regex:/^[0-9+\-\s()]+$/'],
+            'jenis_kelamin' => ['nullable', 'in:L,P'],
             'kelompok_id' => ['nullable', 'exists:kelompok,id'],
             'tanggal_gabung' => ['required', 'date'],
             'status' => ['required', 'in:aktif,nonaktif'],
         ], [
             'nama.required' => 'Nama anggota wajib diisi.',
+            'nik.required' => 'NIK wajib diisi.',
+            'nik.size' => 'NIK harus terdiri dari 16 digit.',
+            'nik.regex' => 'NIK harus berupa angka 16 digit.',
+            'nik.unique' => 'NIK sudah terdaftar.',
+            'nomor_hp.regex' => 'Nomor HP tidak valid.',
+            'jenis_kelamin.in' => 'Jenis kelamin tidak valid.',
             'kelompok_id.exists' => 'Kelompok tidak valid.',
             'tanggal_gabung.required' => 'Tanggal gabung wajib diisi.',
             'tanggal_gabung.date' => 'Tanggal gabung harus berupa tanggal yang valid.',
