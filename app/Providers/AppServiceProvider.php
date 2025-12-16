@@ -32,7 +32,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Gate::define('admin_desa', function ($user) {
-            return $user->isAdminDesa() || $user->isSuperAdmin();
+            return $user->isAdminDesa();
         });
 
         // Gate untuk read-only access - admin kecamatan bisa melihat data di kecamatannya

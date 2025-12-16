@@ -19,10 +19,7 @@ class Edit extends Component
     public function mount(Kelompok $kelompok): void
     {
         // Hanya Admin Desa yang bisa mengedit kelompok
-        $user = Auth::user();
-        if (!$user || (!$user->isAdminDesa() && !$user->isSuperAdmin())) {
-            abort(403, 'Anda tidak memiliki izin untuk mengakses halaman ini.');
-        }
+        Gate::authorize('admin_desa');
         
         $this->kelompok = $kelompok;
         $this->nama_kelompok = $kelompok->nama_kelompok;
@@ -33,10 +30,7 @@ class Edit extends Component
     public function update(): void
     {
         // Pastikan hanya admin desa yang bisa mengupdate kelompok
-        $user = Auth::user();
-        if (!$user || (!$user->isAdminDesa() && !$user->isSuperAdmin())) {
-            abort(403, 'Anda tidak memiliki izin untuk mengupdate kelompok.');
-        }
+        Gate::authorize('admin_desa');
         
         $validated = $this->validate([
             'nama_kelompok' => ['required', 'string', 'max:255'],

@@ -62,6 +62,29 @@
                     placeholder="Cari nama atau alamat..."
                     class="w-full sm:w-64"
                 />
+                @if(auth()->user()->isSuperAdmin())
+                    <flux:select wire:model.live="kecamatanFilter" class="w-full sm:w-48">
+                        <option value="">Semua Kecamatan</option>
+                        @foreach($kecamatan as $kec)
+                            <option value="{{ $kec->id }}">{{ $kec->nama_kecamatan }}</option>
+                        @endforeach
+                    </flux:select>
+                    @if($kecamatanFilter)
+                        <flux:select wire:model.live="desaFilter" class="w-full sm:w-48">
+                            <option value="">Semua Desa</option>
+                            @foreach($desa as $d)
+                                <option value="{{ $d->id }}">{{ $d->nama_desa }}</option>
+                            @endforeach
+                        </flux:select>
+                    @endif
+                @elseif(auth()->user()->isAdminKecamatan())
+                    <flux:select wire:model.live="desaFilter" class="w-full sm:w-48">
+                        <option value="">Semua Desa</option>
+                        @foreach($desa as $d)
+                            <option value="{{ $d->id }}">{{ $d->nama_desa }}</option>
+                        @endforeach
+                    </flux:select>
+                @endif
                 <flux:select wire:model.live="kelompokFilter" class="w-full sm:w-48">
                     <option value="">Semua Kelompok</option>
                     @foreach($kelompok as $k)
@@ -74,7 +97,7 @@
                     <option value="nonaktif">Nonaktif</option>
                 </flux:select>
             </div>
-            @if(auth()->user()->isAdminDesa() || auth()->user()->isSuperAdmin())
+            @if(auth()->user()->isAdminDesa())
                 <flux:button 
                     wire:navigate 
                     href="{{ route('anggota.create') }}" 
@@ -92,6 +115,10 @@
                         <th class="px-4 py-3 text-left text-sm font-semibold">No</th>
                         <th class="px-4 py-3 text-left text-sm font-semibold">Nama</th>
                         <th class="px-4 py-3 text-left text-sm font-semibold">Kelompok</th>
+                        @if(auth()->user()->isSuperAdmin())
+                            <th class="px-4 py-3 text-left text-sm font-semibold">Kecamatan</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold">Desa</th>
+                        @endif
                         <th class="px-4 py-3 text-left text-sm font-semibold">Alamat</th>
                         <th class="px-4 py-3 text-left text-sm font-semibold">Tanggal Gabung</th>
                         <th class="px-4 py-3 text-left text-sm font-semibold">Status</th>
@@ -108,6 +135,14 @@
                             <td class="px-4 py-3 text-sm">
                                 <flux:badge>{{ $item->kelompok->nama_kelompok ?? '-' }}</flux:badge>
                             </td>
+                            @if(auth()->user()->isSuperAdmin())
+                                <td class="px-4 py-3 text-sm">
+                                    {{ $item->desa->kecamatan->nama_kecamatan ?? '-' }}
+                                </td>
+                                <td class="px-4 py-3 text-sm">
+                                    {{ $item->desa->nama_desa ?? '-' }}
+                                </td>
+                            @endif
                             <td class="px-4 py-3 text-sm">
                                 <div class="max-w-xs truncate text-zinc-600 dark:text-zinc-400">
                                     {{ $item->alamat ?? '-' }}
@@ -122,7 +157,7 @@
                                 </flux:badge>
                             </td>
                             <td class="px-4 py-3 text-right">
-                                @if(auth()->user()->isAdminDesa() || auth()->user()->isSuperAdmin())
+                                @if(auth()->user()->isAdminDesa())
                                     <div class="flex items-center justify-end gap-2">
                                         <flux:button 
                                             wire:navigate
@@ -149,7 +184,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-4 py-8 text-center text-sm text-zinc-600 dark:text-zinc-400">
+                            <td colspan="{{ auth()->user()->isSuperAdmin() ? '9' : '7' }}" class="px-4 py-8 text-center text-sm text-zinc-600 dark:text-zinc-400">
                                 Tidak ada data anggota ditemukan.
                             </td>
                         </tr>

@@ -18,11 +18,15 @@ class Index extends Component
     public string $search = '';
     public ?int $kelompokFilter = null;
     public string $statusFilter = '';
+    public ?int $kecamatanFilter = null;
+    public ?int $desaFilter = null;
 
     protected $queryString = [
         'search' => ['except' => ''],
         'kelompokFilter' => ['except' => ''],
         'statusFilter' => ['except' => ''],
+        'kecamatanFilter' => ['except' => null],
+        'desaFilter' => ['except' => null],
     ];
 
     public function mount(): void
@@ -47,11 +51,22 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function updatingKecamatanFilter(): void
+    {
+        $this->resetPage();
+        $this->reset('desaFilter');
+    }
+
+    public function updatingDesaFilter(): void
+    {
+        $this->resetPage();
+    }
+
     public function delete(int $anggotaId): void
     {
         // Hanya Admin Desa yang bisa menghapus anggota
         $user = Auth::user();
-        if (!$user || (!$user->isAdminDesa() && !$user->isSuperAdmin())) {
+        if (!$user || !$user->isAdminDesa()) {
             abort(403, 'Anda tidak memiliki izin untuk menghapus anggota.');
         }
         
@@ -67,7 +82,9 @@ class Index extends Component
 
     public function render()
     {
-        $query = Anggota::with('kelompok')
+        $user = Auth::user();
+        
+        $query = Anggota::with(['kelompok', 'desa.kecamatan'])
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('nama', 'like', '%' . $this->search . '%')
@@ -80,15 +97,57 @@ class Index extends Component
             ->when($this->statusFilter, function ($query) {
                 $query->where('status', $this->statusFilter);
             })
+            ->when($this->kecamatanFilter, function ($query) {
+                $query->whereHas('desa', function ($q) {
+                    $q->where('kecamatan_id', $this->kecamatanFilter);
+                });
+            })
+            ->when($this->desaFilter, function ($query) {
+                $query->where('desa_id', $this->desaFilter);
+            })
             ->orderBy('nama');
 
-        $kelompok = Kelompok::where('status', 'aktif')
-            ->orderBy('nama_kelompok')
-            ->get();
+        // Get kelompok for filter
+        $kelompokQuery = Kelompok::where('status', 'aktif');
+        if ($this->desaFilter) {
+            $kelompokQuery->where('desa_id', $this->desaFilter);
+        } elseif ($this->kecamatanFilter) {
+            $kelompokQuery->whereHas('desa', function ($q) {
+                $q->where('kecamatan_id', $this->kecamatanFilter);
+            });
+        } elseif ($user && $user->isAdminKecamatan()) {
+            // Admin kecamatan hanya melihat kelompok di kecamatannya
+            $kelompokQuery->whereHas('desa', function ($q) use ($user) {
+                $q->where('kecamatan_id', $user->kecamatan_id);
+            });
+        }
+        $kelompok = $kelompokQuery->orderBy('nama_kelompok')->get();
+
+        // Get kecamatan and desa for filters
+        $kecamatan = collect();
+        $desa = collect();
+        
+        if ($user && $user->isSuperAdmin()) {
+            $kecamatan = \App\Models\Kecamatan::aktif()->orderBy('nama_kecamatan')->get();
+            if ($this->kecamatanFilter) {
+                $desa = \App\Models\Desa::where('kecamatan_id', $this->kecamatanFilter)
+                    ->aktif()
+                    ->orderBy('nama_desa')
+                    ->get();
+            }
+        } elseif ($user && $user->isAdminKecamatan()) {
+            // Admin kecamatan bisa filter berdasarkan desa di kecamatannya
+            $desa = \App\Models\Desa::where('kecamatan_id', $user->kecamatan_id)
+                ->aktif()
+                ->orderBy('nama_desa')
+                ->get();
+        }
 
         return view('livewire.master-data.anggota.index', [
             'anggota' => $query->paginate(10),
             'kelompok' => $kelompok,
+            'kecamatan' => $kecamatan,
+            'desa' => $desa,
         ]);
     }
 }

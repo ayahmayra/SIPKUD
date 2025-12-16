@@ -21,10 +21,7 @@ class Create extends Component
     public function mount(): void
     {
         // Hanya Admin Desa yang bisa membuat anggota
-        $user = Auth::user();
-        if (!$user || (!$user->isAdminDesa() && !$user->isSuperAdmin())) {
-            abort(403, 'Anda tidak memiliki izin untuk mengakses halaman ini.');
-        }
+        Gate::authorize('admin_desa');
     }
 
     public function save(): void
@@ -45,11 +42,9 @@ class Create extends Component
         ]);
 
         // Pastikan hanya admin desa yang bisa membuat anggota
-        $user = Auth::user();
-        if (!$user || (!$user->isAdminDesa() && !$user->isSuperAdmin())) {
-            abort(403, 'Anda tidak memiliki izin untuk membuat anggota.');
-        }
+        Gate::authorize('admin_desa');
         
+        $user = Auth::user();
         // Admin kecamatan tidak memiliki desa_id, jadi tidak bisa membuat anggota
         if (!$user->desa_id) {
             abort(403, 'Anda tidak memiliki izin untuk membuat anggota.');
