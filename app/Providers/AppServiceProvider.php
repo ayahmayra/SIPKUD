@@ -32,7 +32,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Gate::define('admin_desa', function ($user) {
-            return $user->isAdminDesa() || $user->isAdminKecamatan() || $user->isSuperAdmin();
+            return $user->isAdminDesa() || $user->isSuperAdmin();
         });
 
         // Share pengaturan globally to all views

@@ -1,0 +1,77 @@
+<?php
+
+namespace App\Livewire\MasterData\Kelompok;
+
+use App\Models\Kelompok;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
+use Livewire\WithPagination;
+
+#[Layout('components.layouts.app', ['title' => 'Master Kelompok'])]
+class Index extends Component
+{
+    use WithPagination;
+
+    public string $search = '';
+    public string $statusFilter = '';
+
+    protected $queryString = [
+        'search' => ['except' => ''],
+        'statusFilter' => ['except' => ''],
+    ];
+
+    public function mount(): void
+    {
+        // Hanya Admin Desa yang bisa mengakses halaman kelompok
+        if (!Auth::user()->isAdminDesa() && !Auth::user()->isSuperAdmin()) {
+            abort(403, 'Anda tidak memiliki izin untuk mengakses halaman ini.');
+        }
+    }
+
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingStatusFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function delete(int $kelompokId): void
+    {
+        $kelompok = Kelompok::findOrFail($kelompokId);
+        
+        // Check if kelompok has anggota
+        $anggotaCount = $kelompok->anggota()->count();
+        if ($anggotaCount > 0) {
+            $this->dispatch('error', message: "Tidak dapat menghapus kelompok yang memiliki {$anggotaCount} anggota.");
+            return;
+        }
+
+        $kelompok->delete();
+        $this->dispatch('success', message: 'Kelompok berhasil dihapus.');
+    }
+
+    public function render()
+    {
+        $query = Kelompok::withCount('anggota')
+            ->when($this->search, function ($query) {
+                $query->where(function ($q) {
+                    $q->where('nama_kelompok', 'like', '%' . $this->search . '%')
+                        ->orWhere('keterangan', 'like', '%' . $this->search . '%');
+                });
+            })
+            ->when($this->statusFilter, function ($query) {
+                $query->where('status', $this->statusFilter);
+            })
+            ->orderBy('nama_kelompok');
+
+        return view('livewire.master-data.kelompok.index', [
+            'kelompok' => $query->paginate(10),
+        ]);
+    }
+}
+
