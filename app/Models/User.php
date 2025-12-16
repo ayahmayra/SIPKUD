@@ -14,7 +14,12 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * Model User (Pengguna)
  * 
  * Sistem autentikasi dan otorisasi untuk SIPKUD
- * Mendukung 3 role: Super Admin PMD, Admin Desa, Executive View
+ * Mendukung 4 role: Super Admin PMD (Kabupaten), Admin Kecamatan, Admin Desa, Executive View
+ * 
+ * Hierarki:
+ * - Super Admin: dapat membuat Admin Kecamatan dan Admin Desa
+ * - Admin Kecamatan: dapat membuat Admin Desa di kecamatannya
+ * - Admin Desa: level terendah, mengelola data desa
  * 
  * Catatan: Modul-modul berikut akan dikembangkan di fase selanjutnya:
  * - Pinjaman
@@ -102,6 +107,14 @@ class User extends Authenticatable
     public function isSuperAdmin(): bool
     {
         return $this->role === 'super_admin';
+    }
+
+    /**
+     * Check if user is Admin Kecamatan
+     */
+    public function isAdminKecamatan(): bool
+    {
+        return $this->role === 'admin_kecamatan';
     }
 
     /**

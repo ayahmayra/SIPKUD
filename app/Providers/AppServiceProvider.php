@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Pengaturan;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -21,6 +22,19 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Define gates for role-based access
+        Gate::define('super_admin', function ($user) {
+            return $user->isSuperAdmin();
+        });
+
+        Gate::define('admin_kecamatan', function ($user) {
+            return $user->isAdminKecamatan() || $user->isSuperAdmin();
+        });
+
+        Gate::define('admin_desa', function ($user) {
+            return $user->isAdminDesa() || $user->isAdminKecamatan() || $user->isSuperAdmin();
+        });
+
         // Share pengaturan globally to all views
         View::composer('*', function ($view) {
             try {
