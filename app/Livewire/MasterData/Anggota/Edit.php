@@ -9,26 +9,40 @@ use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-#[Layout('components.layouts.app', ['title' => 'Tambah Anggota'])]
-class Create extends Component
+#[Layout('components.layouts.app', ['title' => 'Edit Anggota'])]
+class Edit extends Component
 {
+    public Anggota $anggota;
     public string $nama = '';
     public ?string $alamat = null;
     public ?int $kelompok_id = null;
     public ?string $tanggal_gabung = null;
     public string $status = 'aktif';
 
-    public function mount(): void
+    public function mount(Anggota $anggota): void
     {
-        // Hanya Admin Desa yang bisa membuat anggota
+        // Hanya Admin Desa yang bisa mengedit anggota
         $user = Auth::user();
         if (!$user || (!$user->isAdminDesa() && !$user->isSuperAdmin())) {
             abort(403, 'Anda tidak memiliki izin untuk mengakses halaman ini.');
         }
+        
+        $this->anggota = $anggota;
+        $this->nama = $anggota->nama;
+        $this->alamat = $anggota->alamat;
+        $this->kelompok_id = $anggota->kelompok_id;
+        $this->tanggal_gabung = $anggota->tanggal_gabung ? $anggota->tanggal_gabung->format('Y-m-d') : null;
+        $this->status = $anggota->status;
     }
 
-    public function save(): void
+    public function update(): void
     {
+        // Pastikan hanya admin desa yang bisa mengupdate anggota
+        $user = Auth::user();
+        if (!$user || (!$user->isAdminDesa() && !$user->isSuperAdmin())) {
+            abort(403, 'Anda tidak memiliki izin untuk mengupdate anggota.');
+        }
+        
         $validated = $this->validate([
             'nama' => ['required', 'string', 'max:255'],
             'alamat' => ['nullable', 'string'],
@@ -44,25 +58,12 @@ class Create extends Component
             'status.in' => 'Status tidak valid.',
         ]);
 
-        // Pastikan hanya admin desa yang bisa membuat anggota
-        $user = Auth::user();
-        if (!$user || (!$user->isAdminDesa() && !$user->isSuperAdmin())) {
-            abort(403, 'Anda tidak memiliki izin untuk membuat anggota.');
-        }
-        
-        // Admin kecamatan tidak memiliki desa_id, jadi tidak bisa membuat anggota
-        if (!$user->desa_id) {
-            abort(403, 'Anda tidak memiliki izin untuk membuat anggota.');
-        }
-        
-        $validated['desa_id'] = Auth::user()->desa_id;
-        $validated['created_by'] = Auth::id();
         $validated['updated_by'] = Auth::id();
         $validated['tanggal_gabung'] = \Carbon\Carbon::parse($validated['tanggal_gabung']);
 
-        Anggota::create($validated);
+        $this->anggota->update($validated);
 
-        $this->dispatch('success', message: 'Anggota berhasil ditambahkan.');
+        $this->dispatch('success', message: 'Anggota berhasil diperbarui.');
         $this->redirect(route('anggota.index'), navigate: true);
     }
 
@@ -72,7 +73,7 @@ class Create extends Component
             ->orderBy('nama_kelompok')
             ->get();
 
-        return view('livewire.master-data.anggota.create', [
+        return view('livewire.master-data.anggota.edit', [
             'kelompok' => $kelompok,
         ]);
     }

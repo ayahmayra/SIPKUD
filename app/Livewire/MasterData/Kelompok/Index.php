@@ -25,7 +25,8 @@ class Index extends Component
     public function mount(): void
     {
         // Hanya Admin Desa yang bisa mengakses halaman kelompok
-        if (!Auth::user()->isAdminDesa() && !Auth::user()->isSuperAdmin()) {
+        $user = Auth::user();
+        if (!$user || (!$user->isAdminDesa() && !$user->isSuperAdmin())) {
             abort(403, 'Anda tidak memiliki izin untuk mengakses halaman ini.');
         }
     }

@@ -18,7 +18,8 @@ class Create extends Component
     public function mount(): void
     {
         // Hanya Admin Desa yang bisa membuat kelompok
-        if (!Auth::user()->isAdminDesa() && !Auth::user()->isSuperAdmin()) {
+        $user = Auth::user();
+        if (!$user || (!$user->isAdminDesa() && !$user->isSuperAdmin())) {
             abort(403, 'Anda tidak memiliki izin untuk mengakses halaman ini.');
         }
     }
@@ -36,12 +37,13 @@ class Create extends Component
         ]);
 
         // Pastikan hanya admin desa yang bisa membuat kelompok
-        if (!Auth::user()->isAdminDesa() && !Auth::user()->isSuperAdmin()) {
+        $user = Auth::user();
+        if (!$user || (!$user->isAdminDesa() && !$user->isSuperAdmin())) {
             abort(403, 'Anda tidak memiliki izin untuk membuat kelompok.');
         }
         
         // Admin kecamatan tidak memiliki desa_id, jadi tidak bisa membuat kelompok
-        if (!Auth::user()->desa_id) {
+        if (!$user->desa_id) {
             abort(403, 'Anda tidak memiliki izin untuk membuat kelompok.');
         }
         

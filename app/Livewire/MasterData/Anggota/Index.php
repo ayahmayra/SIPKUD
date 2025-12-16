@@ -28,9 +28,8 @@ class Index extends Component
     public function mount(): void
     {
         // Hanya Admin Desa yang bisa mengakses halaman anggota
-        if (!Auth::user()->isAdminDesa() && !Auth::user()->isSuperAdmin()) {
-            abort(403, 'Anda tidak memiliki izin untuk mengakses halaman ini.');
-        }
+        // Gate admin_desa sudah diperbaiki untuk tidak mengizinkan admin kecamatan
+        Gate::authorize('admin_desa');
     }
 
     public function updatingSearch(): void
