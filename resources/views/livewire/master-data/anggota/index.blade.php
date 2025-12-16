@@ -109,100 +109,101 @@
         </div>
 
         <div class="overflow-x-auto">
-            <table class="w-full">
+            <table class="w-full text-sm">
                 <thead>
                     <tr class="border-b border-zinc-200 dark:border-zinc-700">
-                        <th class="px-4 py-3 text-left text-sm font-semibold">No</th>
-                        <th class="px-4 py-3 text-left text-sm font-semibold">Nama</th>
-                        <th class="px-4 py-3 text-left text-sm font-semibold">NIK</th>
-                        <th class="px-4 py-3 text-left text-sm font-semibold">Kelompok</th>
+                        <th class="px-2 py-2 text-left text-xs font-semibold w-12">No</th>
+                        <th class="px-2 py-2 text-left text-xs font-semibold min-w-[150px]">Nama</th>
+                        <th class="px-2 py-2 text-left text-xs font-semibold min-w-[120px]">Kelompok</th>
                         @if(auth()->user()->isSuperAdmin())
-                            <th class="px-4 py-3 text-left text-sm font-semibold">Kecamatan</th>
-                            <th class="px-4 py-3 text-left text-sm font-semibold">Desa</th>
+                            <th class="px-2 py-2 text-left text-xs font-semibold min-w-[120px]">Kecamatan</th>
+                            <th class="px-2 py-2 text-left text-xs font-semibold min-w-[120px]">Desa</th>
                         @endif
-                        <th class="px-4 py-3 text-left text-sm font-semibold">Alamat</th>
-                        <th class="px-4 py-3 text-left text-sm font-semibold">Nomor HP</th>
-                        <th class="px-4 py-3 text-left text-sm font-semibold">Jenis Kelamin</th>
-                        <th class="px-4 py-3 text-left text-sm font-semibold">Tanggal Gabung</th>
-                        <th class="px-4 py-3 text-left text-sm font-semibold">Status</th>
-                        <th class="px-4 py-3 text-right text-sm font-semibold">Aksi</th>
+                        <th class="px-2 py-2 text-left text-xs font-semibold min-w-[150px]">Alamat</th>
+                        <th class="px-2 py-2 text-left text-xs font-semibold w-28">HP</th>
+                        <th class="px-2 py-2 text-left text-xs font-semibold w-20">JK</th>
+                        <th class="px-2 py-2 text-left text-xs font-semibold w-24">Tgl Gabung</th>
+                        <th class="px-2 py-2 text-left text-xs font-semibold w-20">Status</th>
+                        <th class="px-2 py-2 text-right text-xs font-semibold w-24">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($anggota as $item)
                         <tr class="border-b border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-900">
-                            <td class="px-4 py-3 text-sm">{{ $anggota->firstItem() + $loop->index }}</td>
-                            <td class="px-4 py-3 text-sm">
-                                <div class="font-medium">{{ $item->nama }}</div>
+                            <td class="px-2 py-2 text-xs">{{ $anggota->firstItem() + $loop->index }}</td>
+                            <td class="px-2 py-2">
+                                <div class="font-medium text-sm">{{ $item->nama }}</div>
                             </td>
-                            <td class="px-4 py-3 text-sm">
-                                <div class="font-mono text-sm">{{ $item->nik ?? '-' }}</div>
-                            </td>
-                            <td class="px-4 py-3 text-sm">
-                                <flux:badge>{{ $item->kelompok->nama_kelompok ?? '-' }}</flux:badge>
+                            <td class="px-2 py-2">
+                                <flux:badge size="sm">{{ $item->kelompok->nama_kelompok ?? '-' }}</flux:badge>
                             </td>
                             @if(auth()->user()->isSuperAdmin())
-                                <td class="px-4 py-3 text-sm">
-                                    {{ $item->desa->kecamatan->nama_kecamatan ?? '-' }}
+                                <td class="px-2 py-2 text-xs">
+                                    <div class="truncate max-w-[120px]" title="{{ $item->desa->kecamatan->nama_kecamatan ?? '-' }}">
+                                        {{ $item->desa->kecamatan->nama_kecamatan ?? '-' }}
+                                    </div>
                                 </td>
-                                <td class="px-4 py-3 text-sm">
-                                    {{ $item->desa->nama_desa ?? '-' }}
+                                <td class="px-2 py-2 text-xs">
+                                    <div class="truncate max-w-[120px]" title="{{ $item->desa->nama_desa ?? '-' }}">
+                                        {{ $item->desa->nama_desa ?? '-' }}
+                                    </div>
                                 </td>
                             @endif
-                            <td class="px-4 py-3 text-sm">
-                                <div class="max-w-xs truncate text-zinc-600 dark:text-zinc-400">
+                            <td class="px-2 py-2 text-xs">
+                                <div class="truncate max-w-[150px] text-zinc-600 dark:text-zinc-400" title="{{ $item->alamat ?? '-' }}">
                                     {{ $item->alamat ?? '-' }}
                                 </div>
                             </td>
-                            <td class="px-4 py-3 text-sm">
+                            <td class="px-2 py-2 text-xs">
                                 {{ $item->nomor_hp ?? '-' }}
                             </td>
-                            <td class="px-4 py-3 text-sm">
+                            <td class="px-2 py-2">
                                 @if($item->jenis_kelamin)
-                                    <flux:badge :variant="$item->jenis_kelamin === 'L' ? 'primary' : 'pink'">
-                                        {{ $item->jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan' }}
+                                    <flux:badge size="sm" :variant="$item->jenis_kelamin === 'L' ? 'primary' : 'pink'">
+                                        {{ $item->jenis_kelamin === 'L' ? 'L' : 'P' }}
                                     </flux:badge>
                                 @else
-                                    <span class="text-zinc-500 dark:text-zinc-400">-</span>
+                                    <span class="text-xs text-zinc-500 dark:text-zinc-400">-</span>
                                 @endif
                             </td>
-                            <td class="px-4 py-3 text-sm">
+                            <td class="px-2 py-2 text-xs">
                                 {{ $item->tanggal_gabung ? $item->tanggal_gabung->format('d/m/Y') : '-' }}
                             </td>
-                            <td class="px-4 py-3 text-sm">
-                                <flux:badge :variant="$item->status === 'aktif' ? 'success' : 'danger'">
+                            <td class="px-2 py-2">
+                                <flux:badge size="sm" :variant="$item->status === 'aktif' ? 'success' : 'danger'">
                                     {{ ucfirst($item->status) }}
                                 </flux:badge>
                             </td>
-                            <td class="px-4 py-3 text-right">
+                            <td class="px-2 py-2 text-right">
                                 @if(auth()->user()->isAdminDesa())
-                                    <div class="flex items-center justify-end gap-2">
+                                    <div class="flex items-center justify-end gap-1">
                                         <flux:button 
                                             wire:navigate
                                             :href="route('anggota.edit', $item->id)"
                                             variant="ghost"
                                             size="sm"
+                                            class="!p-1"
                                         >
-                                            <flux:icon.pencil class="size-4" />
+                                            <flux:icon.pencil class="size-3.5" />
                                         </flux:button>
                                         <flux:button 
                                             wire:click="delete({{ $item->id }})"
                                             wire:confirm="Apakah Anda yakin ingin menghapus anggota ini?"
                                             variant="ghost"
                                             size="sm"
-                                            class="text-red-600 hover:text-red-700 dark:text-red-400"
+                                            class="!p-1 text-red-600 hover:text-red-700 dark:text-red-400"
                                         >
-                                            <flux:icon.trash class="size-4" />
+                                            <flux:icon.trash class="size-3.5" />
                                         </flux:button>
                                     </div>
                                 @else
-                                    <span class="text-sm text-zinc-500 dark:text-zinc-400">-</span>
+                                    <span class="text-xs text-zinc-500 dark:text-zinc-400">-</span>
                                 @endif
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ auth()->user()->isSuperAdmin() ? '12' : '10' }}" class="px-4 py-8 text-center text-sm text-zinc-600 dark:text-zinc-400">
+                            <td colspan="{{ auth()->user()->isSuperAdmin() ? '11' : '9' }}" class="px-2 py-8 text-center text-xs text-zinc-600 dark:text-zinc-400">
                                 Tidak ada data anggota ditemukan.
                             </td>
                         </tr>

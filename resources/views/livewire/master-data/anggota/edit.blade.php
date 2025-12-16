@@ -74,7 +74,6 @@
                 type="text"
                 pattern="[0-9]{16}"
             />
-            <flux:error name="nik" />
 
             <flux:textarea 
                 wire:model="alamat" 
