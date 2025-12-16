@@ -10,31 +10,87 @@
             </div>
 
             <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <flux:card class="p-6">
+                <flux:card class="p-6 border-l-4 border-l-blue-500 bg-blue-50/50 dark:bg-blue-950/20 dark:border-l-blue-400">
                     <div>
                         <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-2">Total Kecamatan</p>
-                        <p class="text-3xl font-bold">{{ \App\Models\Kecamatan::count() }}</p>
+                        <p class="text-3xl font-bold">{{ \App\Models\Kecamatan::where('status', 'aktif')->count() }}</p>
                     </div>
                 </flux:card>
 
-                <flux:card class="p-6">
+                <flux:card class="p-6 border-l-4 border-l-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20 dark:border-l-emerald-400">
                     <div>
                         <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-2">Total Desa</p>
-                        <p class="text-3xl font-bold">{{ \App\Models\Desa::count() }}</p>
-                    </div>
-                </flux:card>
-
-                <flux:card class="p-6">
-                    <div>
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-2">Total Pengguna</p>
-                        <p class="text-3xl font-bold">{{ \App\Models\User::count() }}</p>
-                    </div>
-                </flux:card>
-
-                <flux:card class="p-6">
-                    <div>
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-2">Desa Aktif</p>
                         <p class="text-3xl font-bold">{{ \App\Models\Desa::where('status', 'aktif')->count() }}</p>
+                    </div>
+                </flux:card>
+
+                <flux:card class="p-6 border-l-4 border-l-purple-500 bg-purple-50/50 dark:bg-purple-950/20 dark:border-l-purple-400">
+                    <div>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-2">Total Kelompok</p>
+                        <p class="text-3xl font-bold">{{ \App\Models\Kelompok::count() }}</p>
+                    </div>
+                </flux:card>
+
+                <flux:card class="p-6 border-l-4 border-l-amber-500 bg-amber-50/50 dark:bg-amber-950/20 dark:border-l-amber-400">
+                    <div>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-2">Total Anggota</p>
+                        <p class="text-3xl font-bold">{{ \App\Models\Anggota::count() }}</p>
+                    </div>
+                </flux:card>
+            </div>
+
+            <flux:card>
+                <div class="p-6">
+                    <flux:heading size="lg" class="mb-4">Catatan Pengembangan</flux:heading>
+                    <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+                        Modul-modul berikut akan dikembangkan di fase selanjutnya:
+                    </p>
+                    <ul class="list-disc list-inside space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
+                        <li>Pinjaman</li>
+                        <li>Kas</li>
+                        <li>Jurnal (Akuntansi)</li>
+                        <li>Aset</li>
+                        <li>Pelaporan</li>
+                    </ul>
+                </div>
+            </flux:card>
+        </div>
+    @elseif(auth()->user()->isAdminKecamatan())
+        {{-- Admin Kecamatan Dashboard --}}
+        <div class="flex h-full w-full flex-1 flex-col gap-6">
+            <div>
+                <flux:heading size="xl">Dashboard Admin Kecamatan {{ auth()->user()->kecamatan->nama_kecamatan ?? 'Kecamatan' }}</flux:heading>
+                <flux:heading size="sm" class="mt-2 text-zinc-600 dark:text-zinc-400">
+                    Sistem Informasi Pelaporan Keuangan USP Desa
+                </flux:heading>
+            </div>
+
+            <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <flux:card class="p-6 border-l-4 border-l-blue-500 bg-blue-50/50 dark:bg-blue-950/20 dark:border-l-blue-400">
+                    <div>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-2">Total Desa</p>
+                        <p class="text-3xl font-bold">{{ \App\Models\Desa::where('kecamatan_id', auth()->user()->kecamatan_id)->where('status', 'aktif')->count() }}</p>
+                    </div>
+                </flux:card>
+
+                <flux:card class="p-6 border-l-4 border-l-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20 dark:border-l-emerald-400">
+                    <div>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-2">Total Kelompok</p>
+                        <p class="text-3xl font-bold">{{ \App\Models\Kelompok::whereHas('desa', function($q) { $q->where('kecamatan_id', auth()->user()->kecamatan_id); })->count() }}</p>
+                    </div>
+                </flux:card>
+
+                <flux:card class="p-6 border-l-4 border-l-purple-500 bg-purple-50/50 dark:bg-purple-950/20 dark:border-l-purple-400">
+                    <div>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-2">Total Anggota</p>
+                        <p class="text-3xl font-bold">{{ \App\Models\Anggota::whereHas('desa', function($q) { $q->where('kecamatan_id', auth()->user()->kecamatan_id); })->count() }}</p>
+                    </div>
+                </flux:card>
+
+                <flux:card class="p-6 border-l-4 border-l-amber-500 bg-amber-50/50 dark:bg-amber-950/20 dark:border-l-amber-400">
+                    <div>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-2">Total Admin Desa</p>
+                        <p class="text-3xl font-bold">{{ \App\Models\User::where('kecamatan_id', auth()->user()->kecamatan_id)->where('role', 'admin_desa')->count() }}</p>
                     </div>
                 </flux:card>
             </div>
@@ -70,28 +126,28 @@
             </div>
 
             <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <flux:card class="p-6">
+                <flux:card class="p-6 border-l-4 border-l-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/20 dark:border-l-indigo-400">
                     <div>
                         <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-2">Total Kelompok</p>
                         <p class="text-3xl font-bold">{{ \App\Models\Kelompok::where('desa_id', auth()->user()->desa_id)->count() }}</p>
                     </div>
                 </flux:card>
 
-                <flux:card class="p-6">
+                <flux:card class="p-6 border-l-4 border-l-rose-500 bg-rose-50/50 dark:bg-rose-950/20 dark:border-l-rose-400">
                     <div>
                         <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-2">Total Anggota</p>
                         <p class="text-3xl font-bold">{{ \App\Models\Anggota::where('desa_id', auth()->user()->desa_id)->count() }}</p>
                     </div>
                 </flux:card>
 
-                <flux:card class="p-6">
+                <flux:card class="p-6 border-l-4 border-l-cyan-500 bg-cyan-50/50 dark:bg-cyan-950/20 dark:border-l-cyan-400">
                     <div>
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-2">Total Akun</p>
-                        <p class="text-3xl font-bold">{{ \App\Models\Akun::where('desa_id', auth()->user()->desa_id)->count() }}</p>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-2">Kelompok Aktif</p>
+                        <p class="text-3xl font-bold">{{ \App\Models\Kelompok::where('desa_id', auth()->user()->desa_id)->where('status', 'aktif')->count() }}</p>
                     </div>
                 </flux:card>
 
-                <flux:card class="p-6">
+                <flux:card class="p-6 border-l-4 border-l-green-500 bg-green-50/50 dark:bg-green-950/20 dark:border-l-green-400">
                     <div>
                         <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-2">Anggota Aktif</p>
                         <p class="text-3xl font-bold">{{ \App\Models\Anggota::where('desa_id', auth()->user()->desa_id)->where('status', 'aktif')->count() }}</p>
