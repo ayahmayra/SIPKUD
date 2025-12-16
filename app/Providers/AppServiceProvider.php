@@ -35,6 +35,11 @@ class AppServiceProvider extends ServiceProvider
             return $user->isAdminDesa() || $user->isSuperAdmin();
         });
 
+        // Gate untuk read-only access - admin kecamatan bisa melihat data di kecamatannya
+        Gate::define('view_desa_data', function ($user) {
+            return $user->isAdminDesa() || $user->isAdminKecamatan() || $user->isSuperAdmin();
+        });
+
         // Share pengaturan globally to all views
         View::composer('*', function ($view) {
             try {

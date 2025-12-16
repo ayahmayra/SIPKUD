@@ -26,6 +26,25 @@
                         <flux:navlist.item icon="cog-6-tooth" :href="route('pengaturan.index')" :current="request()->routeIs('pengaturan.*')" wire:navigate>{{ __('Pengaturan Sistem') }}</flux:navlist.item>
                     </flux:navlist.group>
                 </flux:navlist>
+            @elseif(auth()->user()->isAdminKecamatan())
+                <flux:navlist variant="outline">
+                    <flux:navlist.group :heading="__('Master Data')" class="grid">
+                        <flux:navlist.item icon="users" :href="route('pengguna.index')" :current="request()->routeIs('pengguna.*')" wire:navigate>{{ __('Pengguna') }}</flux:navlist.item>
+                        <flux:navlist.item icon="user-group" :href="route('kelompok.index')" :current="request()->routeIs('kelompok.*')" wire:navigate>{{ __('Kelompok') }}</flux:navlist.item>
+                        <flux:navlist.item icon="user" :href="route('anggota.index')" :current="request()->routeIs('anggota.*')" wire:navigate>{{ __('Anggota') }}</flux:navlist.item>
+                        <flux:navlist.item icon="chart-bar" :href="route('akun.index')" :current="request()->routeIs('akun.*')" wire:navigate>{{ __('Akun') }}</flux:navlist.item>
+                    </flux:navlist.group>
+                </flux:navlist>
+
+                <flux:navlist variant="outline">
+                    <flux:navlist.group :heading="__('Modul Akan Datang')" class="grid">
+                        <flux:navlist.item icon="currency-dollar" disabled>{{ __('Pinjaman') }}</flux:navlist.item>
+                        <flux:navlist.item icon="wallet" disabled>{{ __('Kas') }}</flux:navlist.item>
+                        <flux:navlist.item icon="book-open" disabled>{{ __('Jurnal') }}</flux:navlist.item>
+                        <flux:navlist.item icon="briefcase" disabled>{{ __('Aset') }}</flux:navlist.item>
+                        <flux:navlist.item icon="document-chart-bar" disabled>{{ __('Pelaporan') }}</flux:navlist.item>
+                    </flux:navlist.group>
+                </flux:navlist>
             @else
                 <flux:navlist variant="outline">
                     <flux:navlist.group :heading="__('Master Data')" class="grid">

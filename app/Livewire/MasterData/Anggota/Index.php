@@ -27,9 +27,9 @@ class Index extends Component
 
     public function mount(): void
     {
-        // Hanya Admin Desa yang bisa mengakses halaman anggota
-        // Gate admin_desa sudah diperbaiki untuk tidak mengizinkan admin kecamatan
-        Gate::authorize('admin_desa');
+        // Admin Desa dan Admin Kecamatan bisa melihat anggota
+        // Admin Kecamatan hanya bisa melihat (read-only), tidak bisa create/edit/delete
+        Gate::authorize('view_desa_data');
     }
 
     public function updatingSearch(): void
@@ -49,6 +49,12 @@ class Index extends Component
 
     public function delete(int $anggotaId): void
     {
+        // Hanya Admin Desa yang bisa menghapus anggota
+        $user = Auth::user();
+        if (!$user || (!$user->isAdminDesa() && !$user->isSuperAdmin())) {
+            abort(403, 'Anda tidak memiliki izin untuk menghapus anggota.');
+        }
+        
         $anggota = Anggota::findOrFail($anggotaId);
         
         // Catatan: Di fase selanjutnya, akan ada relasi ke modul Pinjaman

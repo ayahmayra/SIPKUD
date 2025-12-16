@@ -24,11 +24,9 @@ class Index extends Component
 
     public function mount(): void
     {
-        // Hanya Admin Desa yang bisa mengakses halaman kelompok
-        $user = Auth::user();
-        if (!$user || (!$user->isAdminDesa() && !$user->isSuperAdmin())) {
-            abort(403, 'Anda tidak memiliki izin untuk mengakses halaman ini.');
-        }
+        // Admin Desa dan Admin Kecamatan bisa melihat kelompok
+        // Admin Kecamatan hanya bisa melihat (read-only), tidak bisa create/edit/delete
+        Gate::authorize('view_desa_data');
     }
 
     public function updatingSearch(): void
@@ -43,6 +41,12 @@ class Index extends Component
 
     public function delete(int $kelompokId): void
     {
+        // Hanya Admin Desa yang bisa menghapus kelompok
+        $user = Auth::user();
+        if (!$user || (!$user->isAdminDesa() && !$user->isSuperAdmin())) {
+            abort(403, 'Anda tidak memiliki izin untuk menghapus kelompok.');
+        }
+        
         $kelompok = Kelompok::findOrFail($kelompokId);
         
         // Check if kelompok has anggota
