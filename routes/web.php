@@ -62,6 +62,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('kelompok', \App\Livewire\MasterData\Kelompok\Index::class)->name('kelompok.index');
         Route::get('anggota', \App\Livewire\MasterData\Anggota\Index::class)->name('anggota.index');
         Route::get('akun', \App\Livewire\MasterData\Akun\Index::class)->name('akun.index');
+        Route::get('pinjaman', \App\Livewire\Pinjaman\Index::class)->name('pinjaman.index');
     });
 
     // Admin Desa Routes - Create & Edit (admin kecamatan tidak bisa)
@@ -77,5 +78,9 @@ Route::middleware(['auth'])->group(function () {
         // Akun CRUD
         Route::get('akun/create', \App\Livewire\MasterData\Akun\Create::class)->name('akun.create');
         Route::get('akun/{akun}/edit', \App\Livewire\MasterData\Akun\Edit::class)->name('akun.edit');
+        
+        // Pinjaman CRUD
+        Route::get('pinjaman/create', \App\Livewire\Pinjaman\Create::class)->name('pinjaman.create');
+        Route::get('pinjaman/{pinjaman}/edit', \App\Livewire\Pinjaman\Edit::class)->name('pinjaman.edit');
     });
 });

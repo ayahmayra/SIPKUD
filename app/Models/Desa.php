@@ -11,10 +11,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * 
  * Master data untuk desa (village)
  * Merupakan basis multi-tenancy sistem SIPKUD
- * Setiap desa memiliki data terpisah (kelompok, anggota, akun, dll)
+ * Setiap desa memiliki data terpisah (kelompok, anggota, akun, pinjaman, dll)
  * 
  * Catatan: Modul-modul berikut akan dikembangkan di fase selanjutnya:
- * - Pinjaman
  * - Kas
  * - Jurnal (Akuntansi)
  * - Aset
@@ -76,6 +75,14 @@ class Desa extends Model
     public function users(): HasMany
     {
         return $this->hasMany(User::class);
+    }
+
+    /**
+     * Relasi ke pinjaman
+     */
+    public function pinjaman(): HasMany
+    {
+        return $this->hasMany(Pinjaman::class);
     }
 
     /**

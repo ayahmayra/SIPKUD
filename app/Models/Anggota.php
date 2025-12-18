@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\HasDesaScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -12,10 +13,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * 
  * Master data untuk anggota (member)
  * Digunakan untuk menyimpan data anggota USP/UED-SP
- * Akan digunakan oleh modul Pinjaman di fase selanjutnya
  * 
  * Catatan: Modul-modul berikut akan dikembangkan di fase selanjutnya:
- * - Pinjaman
  * - Kas
  * - Jurnal (Akuntansi)
  * - Aset
@@ -79,6 +78,14 @@ class Anggota extends Model
     public function updater(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    /**
+     * Relasi ke pinjaman
+     */
+    public function pinjaman(): HasMany
+    {
+        return $this->hasMany(Pinjaman::class);
     }
 
     /**

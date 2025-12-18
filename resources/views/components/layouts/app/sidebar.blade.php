@@ -28,6 +28,12 @@
                 </flux:navlist>
 
                 <flux:navlist variant="outline">
+                    <flux:navlist.group :heading="__('Transaksi')" class="grid">
+                        <flux:navlist.item icon="currency-dollar" :href="route('pinjaman.index')" :current="request()->routeIs('pinjaman.*')" wire:navigate>{{ __('Pinjaman') }}</flux:navlist.item>
+                    </flux:navlist.group>
+                </flux:navlist>
+
+                <flux:navlist variant="outline">
                     <flux:navlist.group :heading="__('Pengaturan')" class="grid">
                         <flux:navlist.item icon="users" :href="route('pengguna.index')" :current="request()->routeIs('pengguna.*')" wire:navigate>{{ __('Pengguna') }}</flux:navlist.item>
                         <flux:navlist.item icon="cog-6-tooth" :href="route('pengaturan.index')" :current="request()->routeIs('pengaturan.*')" wire:navigate>{{ __('Pengaturan Sistem') }}</flux:navlist.item>
@@ -42,6 +48,12 @@
                 </flux:navlist>
 
                 <flux:navlist variant="outline">
+                    <flux:navlist.group :heading="__('Transaksi')" class="grid">
+                        <flux:navlist.item icon="currency-dollar" :href="route('pinjaman.index')" :current="request()->routeIs('pinjaman.*')" wire:navigate>{{ __('Pinjaman') }}</flux:navlist.item>
+                    </flux:navlist.group>
+                </flux:navlist>
+
+                <flux:navlist variant="outline">
                     <flux:navlist.group :heading="__('Pengaturan')" class="grid">
                         <flux:navlist.item icon="users" :href="route('pengguna.index')" :current="request()->routeIs('pengguna.*')" wire:navigate>{{ __('Pengguna') }}</flux:navlist.item>
                     </flux:navlist.group>
@@ -49,7 +61,6 @@
 
                 <flux:navlist variant="outline">
                     <flux:navlist.group :heading="__('Modul Akan Datang')" class="grid">
-                        <flux:navlist.item icon="currency-dollar" disabled>{{ __('Pinjaman') }}</flux:navlist.item>
                         <flux:navlist.item icon="wallet" disabled>{{ __('Kas') }}</flux:navlist.item>
                         <flux:navlist.item icon="book-open" disabled>{{ __('Jurnal') }}</flux:navlist.item>
                         <flux:navlist.item icon="briefcase" disabled>{{ __('Aset') }}</flux:navlist.item>
@@ -65,8 +76,13 @@
                 </flux:navlist>
 
                 <flux:navlist variant="outline">
+                    <flux:navlist.group :heading="__('Transaksi')" class="grid">
+                        <flux:navlist.item icon="currency-dollar" :href="route('pinjaman.index')" :current="request()->routeIs('pinjaman.*')" wire:navigate>{{ __('Pinjaman') }}</flux:navlist.item>
+                    </flux:navlist.group>
+                </flux:navlist>
+
+                <flux:navlist variant="outline">
                     <flux:navlist.group :heading="__('Modul Akan Datang')" class="grid">
-                        <flux:navlist.item icon="currency-dollar" disabled>{{ __('Pinjaman') }}</flux:navlist.item>
                         <flux:navlist.item icon="wallet" disabled>{{ __('Kas') }}</flux:navlist.item>
                         <flux:navlist.item icon="book-open" disabled>{{ __('Jurnal') }}</flux:navlist.item>
                         <flux:navlist.item icon="briefcase" disabled>{{ __('Aset') }}</flux:navlist.item>
