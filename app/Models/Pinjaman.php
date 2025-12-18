@@ -71,6 +71,26 @@ class Pinjaman extends Model
     }
 
     /**
+     * Boot method untuk event model
+     */
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        // Otomatis buat transaksi kas keluar saat pinjaman dibuat
+        static::created(function (Pinjaman $pinjaman) {
+            TransaksiKas::create([
+                'desa_id' => $pinjaman->desa_id,
+                'tanggal_transaksi' => $pinjaman->tanggal_pinjaman,
+                'uraian' => "Pencairan Pinjaman - {$pinjaman->nomor_pinjaman} - {$pinjaman->anggota->nama}",
+                'jenis_transaksi' => 'keluar',
+                'jumlah' => $pinjaman->jumlah_pinjaman,
+                'pinjaman_id' => $pinjaman->id,
+            ]);
+        });
+    }
+
+    /**
      * Hitung total pokok yang sudah dibayar
      * Dihitung dari transaksi angsuran, bukan dari database
      */

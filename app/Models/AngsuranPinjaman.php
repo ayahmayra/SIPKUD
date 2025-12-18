@@ -50,10 +50,23 @@ class AngsuranPinjaman extends Model
     {
         parent::boot();
 
-        // Auto-update status pinjaman ketika angsuran dibuat
-        static::created(function ($angsuran) {
-            $angsuran->load('pinjaman');
-            $angsuran->pinjaman->updateStatusFromSisa();
+        // Auto-update status pinjaman dan buat transaksi kas masuk ketika angsuran dibuat
+        static::created(function (AngsuranPinjaman $angsuran) {
+            $angsuran->load('pinjaman.anggota');
+            $pinjaman = $angsuran->pinjaman;
+            
+            // Update status pinjaman
+            $pinjaman->updateStatusFromSisa();
+            
+            // Buat transaksi kas masuk otomatis
+            TransaksiKas::create([
+                'desa_id' => $pinjaman->desa_id,
+                'tanggal_transaksi' => $angsuran->tanggal_bayar,
+                'uraian' => "Pembayaran Angsuran ke-{$angsuran->angsuran_ke} - {$pinjaman->nomor_pinjaman} - {$pinjaman->anggota->nama}",
+                'jenis_transaksi' => 'masuk',
+                'jumlah' => $angsuran->total_dibayar,
+                'angsuran_pinjaman_id' => $angsuran->id,
+            ]);
         });
 
         // Auto-update status pinjaman ketika angsuran dihapus
