@@ -90,5 +90,8 @@ Route::middleware(['auth'])->group(function () {
         
         // Angsuran CRUD
         Route::get('angsuran/create', \App\Livewire\Angsuran\Create::class)->name('angsuran.create');
+        
+        // Saldo Awal Kas
+        Route::get('kas/saldo-awal', \App\Livewire\Kas\SaldoAwal::class)->name('kas.saldo-awal');
     });
 });

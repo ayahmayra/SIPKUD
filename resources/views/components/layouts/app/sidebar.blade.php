@@ -97,6 +97,12 @@
                 </flux:navlist>
 
                 <flux:navlist variant="outline">
+                    <flux:navlist.group :heading="__('Kas')" class="grid">
+                        <flux:navlist.item icon="calculator" :href="route('kas.saldo-awal')" :current="request()->routeIs('kas.saldo-awal')" wire:navigate>{{ __('Saldo Awal Kas') }}</flux:navlist.item>
+                    </flux:navlist.group>
+                </flux:navlist>
+
+                <flux:navlist variant="outline">
                     <flux:navlist.group :heading="__('Laporan')" class="grid">
                         <flux:navlist.item icon="document-chart-bar" :href="route('laporan.lpp-ued')" :current="request()->routeIs('laporan.lpp-ued')" wire:navigate>{{ __('LPP UED') }}</flux:navlist.item>
                         <flux:navlist.item icon="wallet" :href="route('laporan.buku-kas')" :current="request()->routeIs('laporan.buku-kas')" wire:navigate>{{ __('Buku Kas') }}</flux:navlist.item>

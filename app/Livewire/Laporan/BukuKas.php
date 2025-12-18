@@ -4,6 +4,7 @@ namespace App\Livewire\Laporan;
 
 use App\Models\TransaksiKas;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -63,7 +64,19 @@ class BukuKas extends Component
                           ->get();
         
         // Hitung saldo awal (sebelum periode filter)
-        $saldoAwalQuery = TransaksiKas::query();
+        // 1. Ambil saldo awal manual (jika ada)
+        $saldoAwalManualQuery = TransaksiKas::query()->where('jenis_transaksi', 'saldo_awal');
+        
+        if ($user->isAdminDesa()) {
+            $saldoAwalManualQuery->where('desa_id', $user->desa_id);
+        } elseif ($user->isAdminKecamatan()) {
+            $saldoAwalManualQuery->whereHas('desa', fn($q) => $q->where('kecamatan_id', $user->kecamatan_id));
+        }
+        
+        $saldoAwalManual = $saldoAwalManualQuery->first();
+        
+        // 2. Hitung transaksi sebelum periode (kecuali saldo_awal)
+        $saldoAwalQuery = TransaksiKas::query()->whereIn('jenis_transaksi', ['masuk', 'keluar']);
         
         if ($user->isAdminDesa()) {
             $saldoAwalQuery->where('desa_id', $user->desa_id);
@@ -71,7 +84,7 @@ class BukuKas extends Component
             $saldoAwalQuery->whereHas('desa', fn($q) => $q->where('kecamatan_id', $user->kecamatan_id));
         }
         
-        // Hitung saldo sebelum periode yang dipilih
+        // Hitung transaksi sebelum periode yang dipilih
         if ($this->bulan && $this->tahun) {
             $tanggalAwal = now()->setYear($this->tahun)->setMonth($this->bulan)->startOfMonth();
             $saldoAwalQuery->where('tanggal_transaksi', '<', $tanggalAwal);
@@ -80,7 +93,10 @@ class BukuKas extends Component
             $saldoAwalQuery->where('tanggal_transaksi', '<', $tanggalAwal);
         }
         
-        $saldoAwal = $saldoAwalQuery->sum(\DB::raw("CASE WHEN jenis_transaksi = 'masuk' THEN jumlah ELSE -jumlah END"));
+        $saldoTransaksi = $saldoAwalQuery->sum(\DB::raw("CASE WHEN jenis_transaksi = 'masuk' THEN jumlah ELSE -jumlah END"));
+        
+        // Saldo awal = saldo manual + transaksi sebelum periode
+        $saldoAwal = ($saldoAwalManual ? $saldoAwalManual->jumlah : 0) + $saldoTransaksi;
         
         // Hitung saldo berjalan untuk setiap transaksi
         $saldoBerjalan = $saldoAwal;
@@ -110,6 +126,7 @@ class BukuKas extends Component
         return view('livewire.laporan.buku-kas', [
             'transaksi' => $dataWithSaldo,
             'saldoAwal' => $saldoAwal,
+            'saldoAwalManual' => $saldoAwalManual,
             'bulanList' => $bulanList,
             'tahunList' => $tahunList,
         ]);
