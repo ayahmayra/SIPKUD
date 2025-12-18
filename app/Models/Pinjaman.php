@@ -80,6 +80,15 @@ class Pinjaman extends Model
     }
 
     /**
+     * Hitung total jasa yang sudah dibayar
+     * Dihitung dari transaksi angsuran, bukan dari database
+     */
+    public function getTotalJasaDibayarAttribute(): float
+    {
+        return (float) $this->angsuran()->sum('jasa_dibayar');
+    }
+
+    /**
      * Hitung sisa pinjaman
      * Sisa = jumlah_pinjaman - total pokok yang sudah dibayar
      */
