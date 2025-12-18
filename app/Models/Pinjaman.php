@@ -90,6 +90,32 @@ class Pinjaman extends Model
     }
 
     /**
+     * Hitung status pinjaman berdasarkan sisa pinjaman
+     * AKTIF jika sisa_pinjaman > 0
+     * LUNAS jika sisa_pinjaman = 0
+     * Dihitung dari transaksi, bukan dari database
+     */
+    public function getStatusPinjamanCalculatedAttribute(): string
+    {
+        $sisaPinjaman = $this->sisa_pinjaman;
+        return $sisaPinjaman > 0 ? 'aktif' : 'lunas';
+    }
+
+    /**
+     * Update status pinjaman berdasarkan sisa pinjaman
+     * Dipanggil otomatis ketika angsuran dibuat atau dihapus
+     */
+    public function updateStatusFromSisa(): void
+    {
+        $newStatus = $this->status_pinjaman_calculated;
+        
+        // Hanya update jika status berbeda
+        if ($this->status_pinjaman !== $newStatus) {
+            $this->update(['status_pinjaman' => $newStatus]);
+        }
+    }
+
+    /**
      * Scope untuk filter aktif
      */
     public function scopeAktif($query)
