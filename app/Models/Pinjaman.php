@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\HasDesaScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Model Pinjaman
@@ -59,6 +60,33 @@ class Pinjaman extends Model
     public function anggota(): BelongsTo
     {
         return $this->belongsTo(Anggota::class);
+    }
+
+    /**
+     * Relasi ke angsuran
+     */
+    public function angsuran(): HasMany
+    {
+        return $this->hasMany(AngsuranPinjaman::class);
+    }
+
+    /**
+     * Hitung total pokok yang sudah dibayar
+     * Dihitung dari transaksi angsuran, bukan dari database
+     */
+    public function getTotalPokokDibayarAttribute(): float
+    {
+        return (float) $this->angsuran()->sum('pokok_dibayar');
+    }
+
+    /**
+     * Hitung sisa pinjaman
+     * Sisa = jumlah_pinjaman - total pokok yang sudah dibayar
+     */
+    public function getSisaPinjamanAttribute(): float
+    {
+        $totalPokokDibayar = (float) $this->angsuran()->sum('pokok_dibayar');
+        return max(0, (float) $this->jumlah_pinjaman - $totalPokokDibayar);
     }
 
     /**
