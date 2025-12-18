@@ -144,7 +144,7 @@ return [
     */
 
     'features' => [
-        Features::registration(),
+        // Features::registration(), // Disabled - Registration hanya dilakukan oleh Super Admin
         Features::resetPasswords(),
         Features::emailVerification(),
         Features::twoFactorAuthentication([
