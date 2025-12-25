@@ -2,6 +2,7 @@
 
 namespace App\Livewire\MasterData\Anggota;
 
+use App\Exports\AnggotaExport;
 use App\Models\Anggota;
 use App\Models\Kelompok;
 use App\Models\Pinjaman;
@@ -12,6 +13,7 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 #[Layout('components.layouts.app', ['title' => 'Master Anggota'])]
 class Index extends Component
@@ -123,6 +125,124 @@ class Index extends Component
         return response()->streamDownload(function () use ($pdf) {
             echo $pdf->output();
         }, $fileName);
+    }
+
+    public function exportExcel(): StreamedResponse
+    {
+        $anggota = $this->getAnggotaQuery()->get();
+        
+        $kecamatanNama = null;
+        $desaNama = null;
+        $kelompokNama = null;
+        
+        if ($this->kecamatanFilter) {
+            $kecamatan = \App\Models\Kecamatan::find($this->kecamatanFilter);
+            $kecamatanNama = $kecamatan?->nama_kecamatan;
+        }
+        
+        if ($this->desaFilter) {
+            $desa = \App\Models\Desa::find($this->desaFilter);
+            $desaNama = $desa?->nama_desa;
+        }
+        
+        if ($this->kelompokFilter) {
+            $kelompok = Kelompok::find($this->kelompokFilter);
+            $kelompokNama = $kelompok?->nama_kelompok;
+        }
+        
+        $export = new AnggotaExport(
+            $anggota,
+            $kecamatanNama,
+            $desaNama,
+            $kelompokNama,
+            $this->statusFilter ?: null
+        );
+        
+        $fileName = 'master-anggota-' . now()->format('Y-m-d-His') . '.xlsx';
+        $tempFile = storage_path('app/temp/' . $fileName);
+        
+        // Ensure temp directory exists
+        if (!file_exists(storage_path('app/temp'))) {
+            mkdir(storage_path('app/temp'), 0755, true);
+        }
+        
+        $export->export($tempFile);
+        
+        return response()->stream(function () use ($tempFile) {
+            echo file_get_contents($tempFile);
+            unlink($tempFile);
+        }, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+        ]);
+    }
+
+    public function exportPdf()
+    {
+        $anggota = $this->getAnggotaQuery()->get();
+        $user = Auth::user();
+        
+        $kecamatanNama = null;
+        $desaNama = null;
+        $kelompokNama = null;
+        
+        if ($this->kecamatanFilter) {
+            $kecamatan = \App\Models\Kecamatan::find($this->kecamatanFilter);
+            $kecamatanNama = $kecamatan?->nama_kecamatan;
+        }
+        
+        if ($this->desaFilter) {
+            $desa = \App\Models\Desa::find($this->desaFilter);
+            $desaNama = $desa?->nama_desa;
+        }
+        
+        if ($this->kelompokFilter) {
+            $kelompok = Kelompok::find($this->kelompokFilter);
+            $kelompokNama = $kelompok?->nama_kelompok;
+        }
+        
+        $pdf = Pdf::loadView('pdf.master-anggota', [
+            'anggota' => $anggota,
+            'kecamatanNama' => $kecamatanNama,
+            'desaNama' => $desaNama,
+            'kelompokNama' => $kelompokNama,
+            'statusFilter' => $this->statusFilter ?: null,
+            'user' => $user,
+        ])->setPaper('a4', 'landscape');
+        
+        $fileName = 'master-anggota-' . now()->format('Y-m-d-His') . '.pdf';
+        
+        return response()->streamDownload(function () use ($pdf) {
+            echo $pdf->output();
+        }, $fileName);
+    }
+
+    protected function getAnggotaQuery()
+    {
+        $user = Auth::user();
+        
+        return Anggota::with(['kelompok', 'desa.kecamatan'])
+            ->when($this->search, function ($query) {
+                $query->where(function ($q) {
+                    $q->where('nama', 'like', '%' . $this->search . '%')
+                        ->orWhere('alamat', 'like', '%' . $this->search . '%');
+                });
+            })
+            ->when($this->kelompokFilter, function ($query) {
+                $query->where('kelompok_id', $this->kelompokFilter);
+            })
+            ->when($this->statusFilter, function ($query) {
+                $query->where('status', $this->statusFilter);
+            })
+            ->when($this->kecamatanFilter, function ($query) {
+                $query->whereHas('desa', function ($q) {
+                    $q->where('kecamatan_id', $this->kecamatanFilter);
+                });
+            })
+            ->when($this->desaFilter, function ($query) {
+                $query->where('desa_id', $this->desaFilter);
+            })
+            ->orderBy('nama');
     }
     
     public function delete(int $anggotaId): void
