@@ -132,7 +132,11 @@
                         <tr class="border-b border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-900">
                             <td class="px-2 py-2 text-xs">{{ $anggota->firstItem() + $loop->index }}</td>
                             <td class="px-2 py-2">
-                                <div class="font-medium text-sm">{{ $item->nama }}</div>
+                                <button 
+                                    wire:click="showAnggotaDetail({{ $item->id }})"
+                                    class="font-medium text-sm text-blue-600 hover:text-blue-800 hover:underline cursor-pointer transition-colors text-left">
+                                    {{ $item->nama }}
+                                </button>
                             </td>
                             <td class="px-2 py-2">
                                 <flux:badge size="sm">{{ $item->kelompok->nama_kelompok ?? '-' }}</flux:badge>
@@ -218,5 +222,12 @@
             </div>
         @endif
     </flux:card>
+
+    <!-- Modal Detail Anggota -->
+    <x-anggota-detail-modal 
+        :show="$showDetailModal"
+        :anggota="$selectedAnggota"
+        :pinjaman="$anggotaPinjaman"
+    />
 </div>
 

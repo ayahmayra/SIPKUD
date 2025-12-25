@@ -93,7 +93,11 @@
                                 {{ $item['nomor_anggota'] }}
                             </td>
                             <td class="px-2 py-2">
-                                <div class="font-medium text-sm">{{ $item['nama_anggota'] }}</div>
+                                <button 
+                                    wire:click="showAnggotaDetail({{ $item['anggota_id'] }})"
+                                    class="font-medium text-sm text-blue-600 hover:text-blue-800 hover:underline cursor-pointer transition-colors">
+                                    {{ $item['nama_anggota'] }}
+                                </button>
                             </td>
                             <td class="px-2 py-2">
                                 <div class="font-medium text-sm">{{ $item['nomor_pinjaman'] }}</div>
@@ -149,4 +153,11 @@
             </table>
         </div>
     </flux:card>
+
+    <!-- Modal Detail Anggota -->
+    <x-anggota-detail-modal 
+        :show="$showDetailModal"
+        :anggota="$selectedAnggota"
+        :pinjaman="$anggotaPinjaman"
+    />
 </div>

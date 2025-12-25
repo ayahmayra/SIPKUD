@@ -4,8 +4,11 @@ namespace App\Livewire\MasterData\Anggota;
 
 use App\Models\Anggota;
 use App\Models\Kelompok;
+use App\Models\Pinjaman;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -20,6 +23,11 @@ class Index extends Component
     public string $statusFilter = '';
     public ?int $kecamatanFilter = null;
     public ?int $desaFilter = null;
+    
+    // Modal detail anggota
+    public bool $showDetailModal = false;
+    public ?Anggota $selectedAnggota = null;
+    public $anggotaPinjaman = [];
 
     protected $queryString = [
         'search' => ['except' => ''],
@@ -62,6 +70,61 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function showAnggotaDetail(int $anggotaId): void
+    {
+        $this->selectedAnggota = Anggota::with(['kelompok', 'desa.kecamatan'])->find($anggotaId);
+        
+        if ($this->selectedAnggota) {
+            // Ambil semua pinjaman anggota dengan relasi angsuran
+            $this->anggotaPinjaman = Pinjaman::with('angsuran')
+                ->where('anggota_id', $anggotaId)
+                ->orderBy('tanggal_pinjaman', 'desc')
+                ->get()
+                ->map(function ($pinjaman) {
+                    return [
+                        'nomor_pinjaman' => $pinjaman->nomor_pinjaman,
+                        'tanggal_pinjaman' => $pinjaman->tanggal_pinjaman,
+                        'jumlah_pinjaman' => $pinjaman->jumlah_pinjaman,
+                        'jangka_waktu' => $pinjaman->jangka_waktu,
+                        'persentase_jasa' => $pinjaman->persentase_jasa,
+                        'total_pokok_dibayar' => $pinjaman->total_pokok_dibayar,
+                        'total_jasa_dibayar' => $pinjaman->total_jasa_dibayar,
+                        'sisa_pinjaman' => $pinjaman->sisa_pinjaman,
+                        'status_pinjaman' => $pinjaman->status_pinjaman,
+                        'jumlah_angsuran' => $pinjaman->angsuran->count(),
+                    ];
+                })
+                ->toArray();
+            
+            $this->showDetailModal = true;
+        }
+    }
+    
+    public function closeDetailModal(): void
+    {
+        $this->showDetailModal = false;
+        $this->selectedAnggota = null;
+        $this->anggotaPinjaman = [];
+    }
+    
+    public function exportAnggotaPdf()
+    {
+        if (!$this->selectedAnggota) {
+            return;
+        }
+        
+        $pdf = Pdf::loadView('pdf.detail-anggota', [
+            'anggota' => $this->selectedAnggota,
+            'pinjaman' => $this->anggotaPinjaman,
+        ])->setPaper('a4', 'portrait');
+        
+        $fileName = 'detail-anggota-' . Str::slug($this->selectedAnggota->nama) . '-' . now()->format('Y-m-d-His') . '.pdf';
+        
+        return response()->streamDownload(function () use ($pdf) {
+            echo $pdf->output();
+        }, $fileName);
+    }
+    
     public function delete(int $anggotaId): void
     {
         // Hanya Admin Desa yang bisa menghapus anggota
