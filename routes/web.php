@@ -45,6 +45,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('desa/create', \App\Livewire\MasterData\Desa\Create::class)->name('desa.create');
         Route::get('desa/{desa}/edit', \App\Livewire\MasterData\Desa\Edit::class)->name('desa.edit');
         
+        // Pengumuman CRUD
+        Route::get('pengumuman', \App\Livewire\MasterData\Pengumuman\Index::class)->name('pengumuman.index');
+        
         // Pengaturan Sistem
         Route::get('pengaturan', \App\Livewire\MasterData\Pengaturan\Edit::class)->name('pengaturan.index');
     });
