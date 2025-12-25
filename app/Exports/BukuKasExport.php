@@ -2,10 +2,13 @@
 
 namespace App\Exports;
 
-use App\Models\TransaksiKas;
 use Illuminate\Support\Collection;
-use OpenSpout\Writer\XLSX\Writer;
-use OpenSpout\Common\Entity\Row;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class BukuKasExport
 {
@@ -34,79 +37,164 @@ class BukuKasExport
 
     public function export(string $filePath): void
     {
-        $writer = new Writer();
-        $writer->openToFile($filePath);
-
-        $writer->addRow(Row::fromValues(['BUKU KAS USP']));
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        $row = 1;
+        
+        // Title
+        $sheet->setCellValue('A' . $row, 'BUKU KAS USP');
+        $sheet->mergeCells('A' . $row . ':F' . $row);
+        $sheet->getStyle('A' . $row)->getFont()->setBold(true)->setSize(14);
+        $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $row++;
         
         // Periode
-        $periode = '';
         if ($this->bulan && $this->tahun) {
             $periode = \Carbon\Carbon::create($this->tahun, $this->bulan, 1)->translatedFormat('F Y');
+            $sheet->setCellValue('A' . $row, "Periode: {$periode}");
+            $sheet->mergeCells('A' . $row . ':F' . $row);
+            $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $row++;
         } elseif ($this->tahun) {
-            $periode = "Tahun {$this->tahun}";
-        }
-        
-        if ($periode) {
-            $writer->addRow(Row::fromValues(["Periode: {$periode}"]));
+            $sheet->setCellValue('A' . $row, "Periode: Tahun {$this->tahun}");
+            $sheet->mergeCells('A' . $row . ':F' . $row);
+            $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $row++;
         }
         
         if ($this->kecamatanNama) {
-            $writer->addRow(Row::fromValues(["Kecamatan: {$this->kecamatanNama}"]));
+            $sheet->setCellValue('A' . $row, "Kecamatan: {$this->kecamatanNama}");
+            $sheet->mergeCells('A' . $row . ':F' . $row);
+            $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $row++;
         }
         
         if ($this->desaNama) {
-            $writer->addRow(Row::fromValues(["Desa: {$this->desaNama}"]));
+            $sheet->setCellValue('A' . $row, "Desa: {$this->desaNama}");
+            $sheet->mergeCells('A' . $row . ':F' . $row);
+            $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $row++;
         }
         
-        $writer->addRow(Row::fromValues([''])); // Empty row
-
-        // Table headers
-        $headers = [
-            'No',
-            'Tanggal',
-            'Keterangan',
-            'Debet',
-            'Kredit',
-            'Saldo'
-        ];
-        $writer->addRow(Row::fromValues($headers));
-
+        $row++; // Empty row
+        
+        // Header row
+        $headerRow = $row;
+        $headers = ['No', 'Tanggal', 'Keterangan', 'Debet', 'Kredit', 'Saldo'];
+        $col = 'A';
+        foreach ($headers as $header) {
+            $sheet->setCellValue($col . $row, $header);
+            $col++;
+        }
+        
+        // Style header
+        $sheet->getStyle('A' . $headerRow . ':F' . $headerRow)->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'color' => ['rgb' => 'FFFFFF'],
+            ],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '4F81BD'],
+            ],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                ],
+            ],
+        ]);
+        
+        $row++;
+        
         // Saldo awal row
-        $writer->addRow(Row::fromValues([
-            '',
-            '',
-            'SALDO AWAL',
-            '',
-            '',
-            number_format($this->saldoAwal, 0, ',', '.')
-        ]));
+        $saldoAwalRow = $row;
+        $sheet->setCellValue('A' . $row, '');
+        $sheet->setCellValue('B' . $row, '');
+        $sheet->setCellValue('C' . $row, 'SALDO AWAL');
+        $sheet->setCellValue('D' . $row, '');
+        $sheet->setCellValue('E' . $row, '');
+        $sheet->setCellValue('F' . $row, $this->saldoAwal);
+        
+        $sheet->getStyle('A' . $saldoAwalRow . ':F' . $saldoAwalRow)->applyFromArray([
+            'font' => ['bold' => true],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'E8F4FF'],
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['rgb' => 'CCCCCC'],
+                ],
+            ],
+        ]);
+        
+        $sheet->getStyle('F' . $saldoAwalRow)->getNumberFormat()->setFormatCode('#,##0');
+        
+        $row++;
 
         // Data rows
-        $saldoBerjalan = $this->saldoAwal;
         $no = 1;
+        $saldoBerjalan = $this->saldoAwal;
         
         foreach ($this->transaksi as $item) {
-            $debet = $item->jenis_transaksi === 'masuk' ? number_format($item->jumlah, 0, ',', '.') : '';
-            $kredit = $item->jenis_transaksi === 'keluar' ? number_format($item->jumlah, 0, ',', '.') : '';
-            
             if ($item->jenis_transaksi === 'masuk') {
                 $saldoBerjalan += $item->jumlah;
             } else {
                 $saldoBerjalan -= $item->jumlah;
             }
 
-            $writer->addRow(Row::fromValues([
-                $no++,
-                $item->tanggal_transaksi->format('d/m/Y'),
-                $item->keterangan ?? '-',
-                $debet,
-                $kredit,
-                number_format($saldoBerjalan, 0, ',', '.')
-            ]));
+            $sheet->setCellValue('A' . $row, $no++);
+            $sheet->setCellValue('B' . $row, $item->tanggal_transaksi->format('d/m/Y'));
+            $sheet->setCellValue('C' . $row, $item->keterangan ?? '-');
+            $sheet->setCellValue('D' . $row, $item->jenis_transaksi === 'masuk' ? $item->jumlah : '');
+            $sheet->setCellValue('E' . $row, $item->jenis_transaksi === 'keluar' ? $item->jumlah : '');
+            $sheet->setCellValue('F' . $row, $saldoBerjalan);
+            
+            // Format numbers
+            if ($item->jenis_transaksi === 'masuk') {
+                $sheet->getStyle('D' . $row)->getNumberFormat()->setFormatCode('#,##0');
+            }
+            if ($item->jenis_transaksi === 'keluar') {
+                $sheet->getStyle('E' . $row)->getNumberFormat()->setFormatCode('#,##0');
+            }
+            $sheet->getStyle('F' . $row)->getNumberFormat()->setFormatCode('#,##0');
+            
+            // Borders
+            $sheet->getStyle('A' . $row . ':F' . $row)->applyFromArray([
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                        'color' => ['rgb' => 'CCCCCC'],
+                    ],
+                ],
+            ]);
+            
+            $row++;
         }
 
-        $writer->close();
+        // Column widths
+        $sheet->getColumnDimension('A')->setWidth(5);
+        $sheet->getColumnDimension('B')->setWidth(12);
+        $sheet->getColumnDimension('C')->setWidth(40);
+        $sheet->getColumnDimension('D')->setWidth(18);
+        $sheet->getColumnDimension('E')->setWidth(18);
+        $sheet->getColumnDimension('F')->setWidth(18);
+        
+        // Alignment
+        $sheet->getStyle('A' . ($headerRow + 1) . ':A' . $row)->getAlignment()
+            ->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('B' . ($headerRow + 1) . ':B' . $row)->getAlignment()
+            ->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('D' . ($headerRow + 1) . ':F' . $row)->getAlignment()
+            ->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($filePath);
     }
 }
-

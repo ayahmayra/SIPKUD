@@ -3,8 +3,12 @@
 namespace App\Exports;
 
 use Illuminate\Support\Collection;
-use OpenSpout\Writer\XLSX\Writer;
-use OpenSpout\Common\Entity\Row;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class LppUedExport
 {
@@ -30,47 +34,75 @@ class LppUedExport
 
     public function export(string $filePath): void
     {
-        $writer = new Writer();
-        $writer->openToFile($filePath);
-
-        $writer->addRow(Row::fromValues(['LAPORAN LPP UED']));
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        $row = 1;
+        
+        // Title
+        $sheet->setCellValue('A' . $row, 'LAPORAN LPP UED');
+        $sheet->mergeCells('A' . $row . ':I' . $row);
+        $sheet->getStyle('A' . $row)->getFont()->setBold(true)->setSize(14);
+        $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $row++;
         
         // Periode
-        $periode = '';
         if ($this->bulan && $this->tahun) {
             $periode = \Carbon\Carbon::create($this->tahun, $this->bulan, 1)->translatedFormat('F Y');
-        } elseif ($this->tahun) {
-            $periode = "Tahun {$this->tahun}";
-        }
-        
-        if ($periode) {
-            $writer->addRow(Row::fromValues(["Periode: {$periode}"]));
+            $sheet->setCellValue('A' . $row, "Periode: {$periode}");
+            $sheet->mergeCells('A' . $row . ':I' . $row);
+            $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $row++;
         }
         
         if ($this->kecamatanNama) {
-            $writer->addRow(Row::fromValues(["Kecamatan: {$this->kecamatanNama}"]));
+            $sheet->setCellValue('A' . $row, "Kecamatan: {$this->kecamatanNama}");
+            $sheet->mergeCells('A' . $row . ':I' . $row);
+            $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $row++;
         }
         
         if ($this->desaNama) {
-            $writer->addRow(Row::fromValues(["Desa: {$this->desaNama}"]));
+            $sheet->setCellValue('A' . $row, "Desa: {$this->desaNama}");
+            $sheet->mergeCells('A' . $row . ':I' . $row);
+            $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $row++;
         }
         
-        $writer->addRow(Row::fromValues([''])); // Empty row
-
-        // Table headers
-        $headers = [
-            'No',
-            'NIK',
-            'Nama Anggota',
-            'Nomor Pinjaman',
-            'Jumlah Pinjaman',
-            'Total Angsuran Pokok',
-            'Total Jasa',
-            'Sisa Pinjaman',
-            'Status'
-        ];
-        $writer->addRow(Row::fromValues($headers));
-
+        $row++; // Empty row
+        
+        // Header row
+        $headerRow = $row;
+        $headers = ['No', 'NIK', 'Nama Anggota', 'Nomor Pinjaman', 'Jumlah Pinjaman', 'Total Angsuran Pokok', 'Total Jasa', 'Sisa Pinjaman', 'Status'];
+        $col = 'A';
+        foreach ($headers as $header) {
+            $sheet->setCellValue($col . $row, $header);
+            $col++;
+        }
+        
+        // Style header
+        $sheet->getStyle('A' . $headerRow . ':I' . $headerRow)->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'color' => ['rgb' => 'FFFFFF'],
+            ],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '4F81BD'],
+            ],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                ],
+            ],
+        ]);
+        
+        $row++;
+        
         // Data rows
         $no = 1;
         $totalJumlahPinjaman = 0;
@@ -91,33 +123,84 @@ class LppUedExport
                 default => $item['status_pinjaman']
             };
 
-            $writer->addRow(Row::fromValues([
-                $no++,
-                $item['nomor_anggota'],
-                $item['nama_anggota'],
-                $item['nomor_pinjaman'],
-                number_format($item['jumlah_pinjaman'], 0, ',', '.'),
-                number_format($item['total_angsuran_pokok'], 0, ',', '.'),
-                number_format($item['total_jasa'], 0, ',', '.'),
-                number_format($item['sisa_pinjaman'], 0, ',', '.'),
-                $statusLabel
-            ]));
+            $sheet->setCellValue('A' . $row, $no++);
+            $sheet->setCellValueExplicit('B' . $row, $item['nomor_anggota'], \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $sheet->setCellValue('C' . $row, $item['nama_anggota']);
+            $sheet->setCellValue('D' . $row, $item['nomor_pinjaman']);
+            $sheet->setCellValue('E' . $row, $item['jumlah_pinjaman']);
+            $sheet->setCellValue('F' . $row, $item['total_angsuran_pokok']);
+            $sheet->setCellValue('G' . $row, $item['total_jasa']);
+            $sheet->setCellValue('H' . $row, $item['sisa_pinjaman']);
+            $sheet->setCellValue('I' . $row, $statusLabel);
+            
+            // Format numbers
+            $sheet->getStyle('E' . $row . ':H' . $row)->getNumberFormat()
+                ->setFormatCode('#,##0');
+            
+            // Borders
+            $sheet->getStyle('A' . $row . ':I' . $row)->applyFromArray([
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                        'color' => ['rgb' => 'CCCCCC'],
+                    ],
+                ],
+            ]);
+            
+            $row++;
         }
 
         // Total row
-        $writer->addRow(Row::fromValues([
-            '',
-            '',
-            '',
-            'TOTAL',
-            number_format($totalJumlahPinjaman, 0, ',', '.'),
-            number_format($totalAngsuranPokok, 0, ',', '.'),
-            number_format($totalJasa, 0, ',', '.'),
-            number_format($totalSisaPinjaman, 0, ',', '.'),
-            ''
-        ]));
+        $totalRow = $row;
+        $sheet->setCellValue('A' . $row, '');
+        $sheet->setCellValue('B' . $row, '');
+        $sheet->setCellValue('C' . $row, '');
+        $sheet->setCellValue('D' . $row, 'TOTAL');
+        $sheet->setCellValue('E' . $row, $totalJumlahPinjaman);
+        $sheet->setCellValue('F' . $row, $totalAngsuranPokok);
+        $sheet->setCellValue('G' . $row, $totalJasa);
+        $sheet->setCellValue('H' . $row, $totalSisaPinjaman);
+        $sheet->setCellValue('I' . $row, '');
+        
+        // Style total row
+        $sheet->getStyle('A' . $totalRow . ':I' . $totalRow)->applyFromArray([
+            'font' => ['bold' => true],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'E8F4FF'],
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                ],
+            ],
+        ]);
+        
+        $sheet->getStyle('E' . $totalRow . ':H' . $totalRow)->getNumberFormat()
+            ->setFormatCode('#,##0');
 
-        $writer->close();
+        // Column widths
+        $sheet->getColumnDimension('A')->setWidth(5);
+        $sheet->getColumnDimension('B')->setWidth(18);
+        $sheet->getColumnDimension('C')->setWidth(25);
+        $sheet->getColumnDimension('D')->setWidth(18);
+        $sheet->getColumnDimension('E')->setWidth(18);
+        $sheet->getColumnDimension('F')->setWidth(18);
+        $sheet->getColumnDimension('G')->setWidth(15);
+        $sheet->getColumnDimension('H')->setWidth(18);
+        $sheet->getColumnDimension('I')->setWidth(12);
+        
+        // Alignment
+        $sheet->getStyle('A' . ($headerRow + 1) . ':A' . $row)->getAlignment()
+            ->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('D' . ($headerRow + 1) . ':D' . $row)->getAlignment()
+            ->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('E' . ($headerRow + 1) . ':H' . $row)->getAlignment()
+            ->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+        $sheet->getStyle('I' . ($headerRow + 1) . ':I' . $row)->getAlignment()
+            ->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($filePath);
     }
 }
-

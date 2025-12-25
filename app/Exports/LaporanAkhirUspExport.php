@@ -2,8 +2,12 @@
 
 namespace App\Exports;
 
-use OpenSpout\Writer\XLSX\Writer;
-use OpenSpout\Common\Entity\Row;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class LaporanAkhirUspExport
 {
@@ -29,77 +33,158 @@ class LaporanAkhirUspExport
 
     public function export(string $filePath): void
     {
-        $writer = new Writer();
-        $writer->openToFile($filePath);
-
-        $writer->addRow(Row::fromValues(['LAPORAN AKHIR USP']));
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        $row = 1;
+        
+        // Title
+        $sheet->setCellValue('A' . $row, 'LAPORAN AKHIR USP');
+        $sheet->mergeCells('A' . $row . ':B' . $row);
+        $sheet->getStyle('A' . $row)->getFont()->setBold(true)->setSize(14);
+        $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $row++;
         
         // Periode
-        $periode = '';
         if ($this->bulan && $this->tahun) {
             $periode = \Carbon\Carbon::create($this->tahun, $this->bulan, 1)->translatedFormat('F Y');
+            $sheet->setCellValue('A' . $row, "Periode: {$periode}");
+            $sheet->mergeCells('A' . $row . ':B' . $row);
+            $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $row++;
         } elseif ($this->tahun) {
-            $periode = "Tahun {$this->tahun}";
-        }
-        
-        if ($periode) {
-            $writer->addRow(Row::fromValues(["Periode: {$periode}"]));
+            $sheet->setCellValue('A' . $row, "Periode: Tahun {$this->tahun}");
+            $sheet->mergeCells('A' . $row . ':B' . $row);
+            $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $row++;
         }
         
         if ($this->kecamatanNama) {
-            $writer->addRow(Row::fromValues(["Kecamatan: {$this->kecamatanNama}"]));
+            $sheet->setCellValue('A' . $row, "Kecamatan: {$this->kecamatanNama}");
+            $sheet->mergeCells('A' . $row . ':B' . $row);
+            $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $row++;
         }
         
         if ($this->desaNama) {
-            $writer->addRow(Row::fromValues(["Desa: {$this->desaNama}"]));
+            $sheet->setCellValue('A' . $row, "Desa: {$this->desaNama}");
+            $sheet->mergeCells('A' . $row . ':B' . $row);
+            $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $row++;
         }
         
-        $writer->addRow(Row::fromValues([''])); // Empty row
+        $row++; // Empty row
 
-        // Data sections
-        $writer->addRow(Row::fromValues(['PENDAPATAN']));
-        $writer->addRow(Row::fromValues([
-            'Pendapatan Jasa',
-            'Rp ' . number_format($this->data['totalPendapatanJasa'], 0, ',', '.')
-        ]));
-        $writer->addRow(Row::fromValues([
-            'Pendapatan Denda',
-            'Rp ' . number_format($this->data['totalPendapatanDenda'], 0, ',', '.')
-        ]));
-        $writer->addRow(Row::fromValues([
-            'Total Pendapatan',
-            'Rp ' . number_format($this->data['totalPendapatan'], 0, ',', '.')
-        ]));
+        // PENDAPATAN Section
+        $sheet->setCellValue('A' . $row, 'PENDAPATAN');
+        $sheet->mergeCells('A' . $row . ':B' . $row);
+        $sheet->getStyle('A' . $row)->getFont()->setBold(true)->setSize(12);
+        $sheet->getStyle('A' . $row)->applyFromArray([
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '4F81BD'],
+            ],
+            'font' => [
+                'bold' => true,
+                'color' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+        $row++;
         
-        $writer->addRow(Row::fromValues([''])); // Empty row
+        $sheet->setCellValue('A' . $row, 'Pendapatan Jasa');
+        $sheet->setCellValue('B' . $row, $this->data['totalPendapatanJasa']);
+        $sheet->getStyle('B' . $row)->getNumberFormat()->setFormatCode('#,##0');
+        $row++;
         
-        $writer->addRow(Row::fromValues(['SISA HASIL USAHA (SHU)']));
-        $writer->addRow(Row::fromValues([
-            "SHU ({$this->data['persentaseShu']}% dari Total Pendapatan)",
-            'Rp ' . number_format($this->data['totalShu'], 0, ',', '.')
-        ]));
+        $sheet->setCellValue('A' . $row, 'Pendapatan Denda');
+        $sheet->setCellValue('B' . $row, $this->data['totalPendapatanDenda']);
+        $sheet->getStyle('B' . $row)->getNumberFormat()->setFormatCode('#,##0');
+        $row++;
         
-        $writer->addRow(Row::fromValues([''])); // Empty row
+        $sheet->setCellValue('A' . $row, 'Total Pendapatan');
+        $sheet->setCellValue('B' . $row, $this->data['totalPendapatan']);
+        $sheet->getStyle('A' . $row . ':B' . $row)->getFont()->setBold(true);
+        $sheet->getStyle('B' . $row)->getNumberFormat()->setFormatCode('#,##0');
+        $sheet->getStyle('A' . $row . ':B' . $row)->applyFromArray([
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'E8F4FF'],
+            ],
+        ]);
+        $row++;
         
-        $writer->addRow(Row::fromValues(['PINJAMAN']));
-        $writer->addRow(Row::fromValues([
-            'Total Pinjaman Tersalurkan',
-            'Rp ' . number_format($this->data['totalPinjamanTersalurkan'], 0, ',', '.')
-        ]));
-        $writer->addRow(Row::fromValues([
-            'Total Pokok Terbayar',
-            'Rp ' . number_format($this->data['totalPokokTerbayar'], 0, ',', '.')
-        ]));
-        $writer->addRow(Row::fromValues([
-            'Jumlah Pinjaman Aktif',
-            $this->data['jumlahPinjamanAktif'] . ' pinjaman'
-        ]));
-        $writer->addRow(Row::fromValues([
-            'Total Sisa Pinjaman',
-            'Rp ' . number_format($this->data['totalSisaPinjaman'], 0, ',', '.')
-        ]));
+        $row++; // Empty row
 
-        $writer->close();
+        // SHU Section
+        $sheet->setCellValue('A' . $row, 'SISA HASIL USAHA (SHU)');
+        $sheet->mergeCells('A' . $row . ':B' . $row);
+        $sheet->getStyle('A' . $row)->applyFromArray([
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '4F81BD'],
+            ],
+            'font' => [
+                'bold' => true,
+                'color' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+        $row++;
+        
+        $sheet->setCellValue('A' . $row, "SHU ({$this->data['persentaseShu']}% dari Total Pendapatan)");
+        $sheet->setCellValue('B' . $row, $this->data['totalShu']);
+        $sheet->getStyle('B' . $row)->getNumberFormat()->setFormatCode('#,##0');
+        $row++;
+        
+        $row++; // Empty row
+
+        // PINJAMAN Section
+        $sheet->setCellValue('A' . $row, 'PINJAMAN');
+        $sheet->mergeCells('A' . $row . ':B' . $row);
+        $sheet->getStyle('A' . $row)->applyFromArray([
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '4F81BD'],
+            ],
+            'font' => [
+                'bold' => true,
+                'color' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+        $row++;
+        
+        $sheet->setCellValue('A' . $row, 'Total Pinjaman Tersalurkan');
+        $sheet->setCellValue('B' . $row, $this->data['totalPinjamanTersalurkan']);
+        $sheet->getStyle('B' . $row)->getNumberFormat()->setFormatCode('#,##0');
+        $row++;
+        
+        $sheet->setCellValue('A' . $row, 'Total Pokok Terbayar');
+        $sheet->setCellValue('B' . $row, $this->data['totalPokokTerbayar']);
+        $sheet->getStyle('B' . $row)->getNumberFormat()->setFormatCode('#,##0');
+        $row++;
+        
+        $sheet->setCellValue('A' . $row, 'Jumlah Pinjaman Aktif');
+        $sheet->setCellValue('B' . $row, $this->data['jumlahPinjamanAktif'] . ' pinjaman');
+        $row++;
+        
+        $sheet->setCellValue('A' . $row, 'Total Sisa Pinjaman');
+        $sheet->setCellValue('B' . $row, $this->data['totalSisaPinjaman']);
+        $sheet->getStyle('A' . $row . ':B' . $row)->getFont()->setBold(true);
+        $sheet->getStyle('B' . $row)->getNumberFormat()->setFormatCode('#,##0');
+        $sheet->getStyle('A' . $row . ':B' . $row)->applyFromArray([
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'E8F4FF'],
+            ],
+        ]);
+
+        // Column widths
+        $sheet->getColumnDimension('A')->setWidth(40);
+        $sheet->getColumnDimension('B')->setWidth(25);
+        
+        // Alignment
+        $sheet->getStyle('B:B')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($filePath);
     }
 }
-
