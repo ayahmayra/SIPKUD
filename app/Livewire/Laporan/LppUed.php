@@ -2,27 +2,38 @@
 
 namespace App\Livewire\Laporan;
 
+use App\Exports\LppUedExport;
+use App\Models\Desa;
+use App\Models\Kecamatan;
 use App\Models\Pinjaman;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 #[Layout('components.layouts.app', ['title' => 'Laporan LPP UED'])]
 class LppUed extends Component
 {
     public ?int $bulan = null;
     public ?int $tahun = null;
+    public ?int $kecamatan_id = null;
+    public ?int $desa_id = null;
 
     protected $queryString = [
         'bulan' => ['except' => null],
         'tahun' => ['except' => null],
+        'kecamatan_id' => ['except' => null],
+        'desa_id' => ['except' => null],
     ];
 
     public function mount(): void
     {
         // Admin Desa dan Admin Kecamatan bisa melihat laporan
         Gate::authorize('view_desa_data');
+        
+        $user = Auth::user();
         
         // Set default bulan dan tahun ke bulan/tahun saat ini
         if (!$this->bulan) {
@@ -31,20 +42,126 @@ class LppUed extends Component
         if (!$this->tahun) {
             $this->tahun = (int) now()->format('Y');
         }
+        
+        // Set default filter berdasarkan role
+        if ($user->isAdminKecamatan() && !$this->kecamatan_id) {
+            $this->kecamatan_id = $user->kecamatan_id;
+        }
+        if ($user->isAdminDesa()) {
+            $this->kecamatan_id = $user->desa->kecamatan_id ?? null;
+            $this->desa_id = $user->desa_id;
+        }
+    }
+    
+    public function updatedKecamatanId(): void
+    {
+        // Reset desa_id saat kecamatan berubah
+        $this->desa_id = null;
     }
 
-    public function render()
+    public function exportExcel(): StreamedResponse
+    {
+        $laporan = $this->getReportData();
+        
+        $kecamatanNama = null;
+        $desaNama = null;
+        
+        if ($this->kecamatan_id) {
+            $kecamatan = Kecamatan::find($this->kecamatan_id);
+            $kecamatanNama = $kecamatan?->nama_kecamatan;
+        }
+        
+        if ($this->desa_id) {
+            $desa = Desa::find($this->desa_id);
+            $desaNama = $desa?->nama_desa;
+        }
+        
+        $export = new LppUedExport(
+            $laporan,
+            $this->bulan,
+            $this->tahun,
+            $kecamatanNama,
+            $desaNama
+        );
+        
+        $fileName = 'lpp-ued-' . now()->format('Y-m-d-His') . '.xlsx';
+        $tempFile = storage_path('app/temp/' . $fileName);
+        
+        // Ensure temp directory exists
+        if (!file_exists(storage_path('app/temp'))) {
+            mkdir(storage_path('app/temp'), 0755, true);
+        }
+        
+        $export->export($tempFile);
+        
+        return response()->stream(function () use ($tempFile) {
+            echo file_get_contents($tempFile);
+            unlink($tempFile);
+        }, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+        ]);
+    }
+
+    public function exportPdf()
+    {
+        $laporan = $this->getReportData();
+        
+        $kecamatanNama = null;
+        $desaNama = null;
+        
+        if ($this->kecamatan_id) {
+            $kecamatan = Kecamatan::find($this->kecamatan_id);
+            $kecamatanNama = $kecamatan?->nama_kecamatan;
+        }
+        
+        if ($this->desa_id) {
+            $desa = Desa::find($this->desa_id);
+            $desaNama = $desa?->nama_desa;
+        }
+        
+        $periode = '';
+        if ($this->bulan && $this->tahun) {
+            $periode = \Carbon\Carbon::create($this->tahun, $this->bulan, 1)->translatedFormat('F Y');
+        } elseif ($this->tahun) {
+            $periode = "Tahun {$this->tahun}";
+        }
+        
+        $pdf = Pdf::loadView('pdf.lpp-ued', [
+            'laporan' => $laporan,
+            'periode' => $periode,
+            'kecamatanNama' => $kecamatanNama,
+            'desaNama' => $desaNama,
+        ])->setPaper('a4', 'landscape');
+        
+        $fileName = 'lpp-ued-' . now()->format('Y-m-d-His') . '.pdf';
+        
+        return response()->streamDownload(function () use ($pdf) {
+            echo $pdf->output();
+        }, $fileName);
+    }
+    
+    protected function getReportData()
     {
         $user = Auth::user();
         
         // Query pinjaman dengan aggregasi angsuran
-        $query = Pinjaman::with(['anggota', 'angsuran'])
+        $query = Pinjaman::with(['anggota', 'desa.kecamatan', 'angsuran'])
             ->when($this->bulan && $this->tahun, function ($q) {
                 // Filter berdasarkan bulan dan tahun pinjaman
                 $q->whereYear('tanggal_pinjaman', $this->tahun)
                   ->whereMonth('tanggal_pinjaman', $this->bulan);
             })
-            ->when($user && $user->desa_id, function ($q) use ($user) {
+            ->when($this->desa_id, function ($q) {
+                $q->where('desa_id', $this->desa_id);
+            })
+            ->when($this->kecamatan_id && !$this->desa_id, function ($q) {
+                $q->whereHas('desa', fn($sq) => $sq->where('kecamatan_id', $this->kecamatan_id));
+            })
+            ->when(!$this->desa_id && !$this->kecamatan_id && $user->isAdminKecamatan(), function ($q) use ($user) {
+                $q->whereHas('desa', fn($sq) => $sq->where('kecamatan_id', $user->kecamatan_id));
+            })
+            ->when(!$this->desa_id && !$this->kecamatan_id && $user->isAdminDesa(), function ($q) use ($user) {
                 $q->where('desa_id', $user->desa_id);
             })
             ->orderBy('tanggal_pinjaman', 'desc')
@@ -53,7 +170,7 @@ class LppUed extends Component
         $pinjaman = $query->get();
 
         // Transform data untuk laporan
-        $laporan = $pinjaman->map(function ($p) {
+        return $pinjaman->map(function ($p) {
             return [
                 'nomor_anggota' => $p->anggota->nik ?? '-',
                 'nama_anggota' => $p->anggota->nama,
@@ -65,6 +182,13 @@ class LppUed extends Component
                 'status_pinjaman' => $p->status_pinjaman,
             ];
         });
+    }
+
+    public function render()
+    {
+        $user = Auth::user();
+        
+        $laporan = $this->getReportData();
 
         // Generate list bulan dan tahun untuk filter
         $bulanList = [];
@@ -77,11 +201,30 @@ class LppUed extends Component
         for ($i = $currentYear; $i >= $currentYear - 5; $i--) {
             $tahunList[$i] = $i;
         }
+        
+        // List kecamatan dan desa untuk filter
+        $kecamatanList = [];
+        $desaList = [];
+        
+        if ($user->isSuperAdmin()) {
+            $kecamatanList = Kecamatan::orderBy('nama_kecamatan')->get();
+        } elseif ($user->isAdminKecamatan()) {
+            $kecamatanList = Kecamatan::where('id', $user->kecamatan_id)->get();
+        }
+        
+        if ($this->kecamatan_id) {
+            $desaList = Desa::where('kecamatan_id', $this->kecamatan_id)->orderBy('nama_desa')->get();
+        } elseif ($user->isAdminKecamatan()) {
+            $desaList = Desa::where('kecamatan_id', $user->kecamatan_id)->orderBy('nama_desa')->get();
+        }
 
         return view('livewire.laporan.lpp-ued', [
             'laporan' => $laporan,
             'bulanList' => $bulanList,
             'tahunList' => $tahunList,
+            'kecamatanList' => $kecamatanList,
+            'desaList' => $desaList,
+            'user' => $user,
         ]);
     }
 }

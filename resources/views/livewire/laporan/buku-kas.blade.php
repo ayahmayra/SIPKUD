@@ -4,13 +4,30 @@
             <div class="p-6 bg-white border-b border-gray-200">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-semibold">Buku Kas USP</h2>
-                    @if(auth()->user()->isAdminDesa())
-                        <a href="{{ route('kas.saldo-awal') }}" 
-                           wire:navigate
-                           class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors">
-                            {{ $saldoAwalManual ? 'Edit Saldo Awal' : 'Input Saldo Awal' }}
-                        </a>
-                    @endif
+                    <div class="flex gap-2">
+                        <!-- Export Buttons -->
+                        <button wire:click="exportExcel" 
+                                class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            Export Excel
+                        </button>
+                        <button wire:click="exportPdf" 
+                                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                            </svg>
+                            Export PDF
+                        </button>
+                        @if(auth()->user()->isAdminDesa())
+                            <a href="{{ route('kas.saldo-awal') }}" 
+                               wire:navigate
+                               class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors">
+                                {{ $saldoAwalManual ? 'Edit Saldo Awal' : 'Input Saldo Awal' }}
+                            </a>
+                        @endif
+                    </div>
                 </div>
 
                 <!-- Alert jika belum ada saldo awal (khusus Admin Desa) -->
@@ -57,6 +74,35 @@
                         </select>
                     </div>
                 </div>
+
+                <!-- Filter Wilayah (Super Admin & Admin Kecamatan) -->
+                @if($user->isSuperAdmin() || $user->isAdminKecamatan())
+                    <div class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        @if($user->isSuperAdmin())
+                            <div>
+                                <label for="kecamatan_id" class="block text-sm font-medium text-gray-700 mb-2">Kecamatan</label>
+                                <select wire:model.live="kecamatan_id" id="kecamatan_id" 
+                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <option value="">-- Semua Kecamatan --</option>
+                                    @foreach ($kecamatanList as $kec)
+                                        <option value="{{ $kec->id }}">{{ $kec->nama_kecamatan }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        @endif
+
+                        <div>
+                            <label for="desa_id" class="block text-sm font-medium text-gray-700 mb-2">Desa</label>
+                            <select wire:model.live="desa_id" id="desa_id" 
+                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <option value="">-- Semua Desa --</option>
+                                @foreach ($desaList as $d)
+                                    <option value="{{ $d->id }}">{{ $d->nama_desa }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                @endif
 
                 <!-- Saldo Awal -->
                 <div class="mb-4 p-4 bg-blue-50 rounded-lg">

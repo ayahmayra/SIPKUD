@@ -2,10 +2,12 @@
 
 namespace App\Livewire\Laporan;
 
-use App\Exports\BukuKasExport;
+use App\Exports\LaporanAkhirUspExport;
+use App\Models\AngsuranPinjaman;
 use App\Models\Desa;
 use App\Models\Kecamatan;
-use App\Models\TransaksiKas;
+use App\Models\Pengaturan;
+use App\Models\Pinjaman;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -14,8 +16,8 @@ use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-#[Layout('components.layouts.app', ['title' => 'Buku Kas USP'])]
-class BukuKas extends Component
+#[Layout('components.layouts.app', ['title' => 'Laporan Akhir USP'])]
+class LaporanAkhirUsp extends Component
 {
     public ?int $bulan = null;
     public ?int $tahun = null;
@@ -36,10 +38,7 @@ class BukuKas extends Component
         
         $user = Auth::user();
         
-        // Set default bulan dan tahun ke bulan/tahun saat ini
-        if (!$this->bulan) {
-            $this->bulan = (int) now()->format('m');
-        }
+        // Set default tahun ke tahun saat ini
         if (!$this->tahun) {
             $this->tahun = (int) now()->format('Y');
         }
@@ -77,16 +76,15 @@ class BukuKas extends Component
             $desaNama = $desa?->nama_desa;
         }
         
-        $export = new BukuKasExport(
-            $data['transaksi'],
-            $data['saldoAwal'],
+        $export = new LaporanAkhirUspExport(
+            $data,
             $this->bulan,
             $this->tahun,
             $kecamatanNama,
             $desaNama
         );
         
-        $fileName = 'buku-kas-' . now()->format('Y-m-d-His') . '.xlsx';
+        $fileName = 'laporan-akhir-usp-' . now()->format('Y-m-d-His') . '.xlsx';
         $tempFile = storage_path('app/temp/' . $fileName);
         
         // Ensure temp directory exists
@@ -129,15 +127,13 @@ class BukuKas extends Component
             $periode = "Tahun {$this->tahun}";
         }
         
-        $pdf = Pdf::loadView('pdf.buku-kas', [
-            'transaksi' => $data['transaksi'],
-            'saldoAwal' => $data['saldoAwal'],
+        $pdf = Pdf::loadView('pdf.laporan-akhir-usp', array_merge($data, [
             'periode' => $periode,
             'kecamatanNama' => $kecamatanNama,
             'desaNama' => $desaNama,
-        ])->setPaper('a4', 'landscape');
+        ]));
         
-        $fileName = 'buku-kas-' . now()->format('Y-m-d-His') . '.pdf';
+        $fileName = 'laporan-akhir-usp-' . now()->format('Y-m-d-His') . '.pdf';
         
         return response()->streamDownload(function () use ($pdf) {
             echo $pdf->output();
@@ -148,90 +144,87 @@ class BukuKas extends Component
     {
         $user = Auth::user();
         
-        // Query transaksi kas berdasarkan filter
-        $query = TransaksiKas::query()
-            ->with(['pinjaman.anggota', 'angsuranPinjaman.pinjaman.anggota', 'desa.kecamatan']);
+        // Query angsuran untuk pendapatan jasa dan denda
+        $angsuranQuery = AngsuranPinjaman::query()
+            ->join('pinjaman', 'angsuran_pinjaman.pinjaman_id', '=', 'pinjaman.id');
+        
+        // Query pinjaman untuk sisa pinjaman
+        $pinjamanQuery = Pinjaman::query()->with('angsuran');
         
         // Filter berdasarkan desa_id atau kecamatan_id
         if ($this->desa_id) {
-            $query->where('desa_id', $this->desa_id);
+            $angsuranQuery->where('pinjaman.desa_id', $this->desa_id);
+            $pinjamanQuery->where('desa_id', $this->desa_id);
         } elseif ($this->kecamatan_id) {
-            $query->whereHas('desa', fn($q) => $q->where('kecamatan_id', $this->kecamatan_id));
+            $angsuranQuery->join('desa', 'pinjaman.desa_id', '=', 'desa.id')
+                         ->where('desa.kecamatan_id', $this->kecamatan_id);
+            $pinjamanQuery->whereHas('desa', fn($q) => $q->where('kecamatan_id', $this->kecamatan_id));
         } elseif ($user->isAdminKecamatan()) {
-            $query->whereHas('desa', fn($q) => $q->where('kecamatan_id', $user->kecamatan_id));
+            $angsuranQuery->join('desa', 'pinjaman.desa_id', '=', 'desa.id')
+                         ->where('desa.kecamatan_id', $user->kecamatan_id);
+            $pinjamanQuery->whereHas('desa', fn($q) => $q->where('kecamatan_id', $user->kecamatan_id));
         } elseif ($user->isAdminDesa()) {
-            $query->where('desa_id', $user->desa_id);
+            $angsuranQuery->where('pinjaman.desa_id', $user->desa_id);
+            $pinjamanQuery->where('desa_id', $user->desa_id);
         }
         
-        // Filter bulan dan tahun
+        // Filter berdasarkan periode
         if ($this->bulan && $this->tahun) {
-            $query->whereMonth('tanggal_transaksi', $this->bulan)
-                  ->whereYear('tanggal_transaksi', $this->tahun);
+            $angsuranQuery->whereMonth('angsuran_pinjaman.tanggal_bayar', $this->bulan)
+                         ->whereYear('angsuran_pinjaman.tanggal_bayar', $this->tahun);
         } elseif ($this->tahun) {
-            $query->whereYear('tanggal_transaksi', $this->tahun);
+            $angsuranQuery->whereYear('angsuran_pinjaman.tanggal_bayar', $this->tahun);
         }
         
-        // Ambil transaksi dan urutkan berdasarkan tanggal
-        $transaksi = $query->orderBy('tanggal_transaksi')
-                          ->orderBy('id')
-                          ->get();
+        // Hitung total pendapatan
+        $totalPendapatanJasa = $angsuranQuery->sum('angsuran_pinjaman.jasa_dibayar');
+        $totalPendapatanDenda = (clone $angsuranQuery)->sum('angsuran_pinjaman.denda_dibayar');
+        $totalPendapatan = $totalPendapatanJasa + $totalPendapatanDenda;
         
-        // Hitung saldo awal
-        $saldoAwalManualQuery = TransaksiKas::query()->where('jenis_transaksi', 'saldo_awal');
+        // Ambil persentase SHU
+        $pengaturan = Pengaturan::getSettings();
+        $persentaseShu = $pengaturan->persentase_shu ?? 20;
+        $totalShu = $totalPendapatan * ($persentaseShu / 100);
         
-        if ($this->desa_id) {
-            $saldoAwalManualQuery->where('desa_id', $this->desa_id);
-        } elseif ($this->kecamatan_id) {
-            $saldoAwalManualQuery->whereHas('desa', fn($q) => $q->where('kecamatan_id', $this->kecamatan_id));
-        } elseif ($user->isAdminKecamatan()) {
-            $saldoAwalManualQuery->whereHas('desa', fn($q) => $q->where('kecamatan_id', $user->kecamatan_id));
-        } elseif ($user->isAdminDesa()) {
-            $saldoAwalManualQuery->where('desa_id', $user->desa_id);
-        }
-        
-        $saldoAwalManual = $saldoAwalManualQuery->first();
-        
-        // Hitung transaksi sebelum periode
-        $saldoAwalQuery = TransaksiKas::query()->whereIn('jenis_transaksi', ['masuk', 'keluar']);
-        
-        if ($this->desa_id) {
-            $saldoAwalQuery->where('desa_id', $this->desa_id);
-        } elseif ($this->kecamatan_id) {
-            $saldoAwalQuery->whereHas('desa', fn($q) => $q->where('kecamatan_id', $this->kecamatan_id));
-        } elseif ($user->isAdminKecamatan()) {
-            $saldoAwalQuery->whereHas('desa', fn($q) => $q->where('kecamatan_id', $user->kecamatan_id));
-        } elseif ($user->isAdminDesa()) {
-            $saldoAwalQuery->where('desa_id', $user->desa_id);
-        }
-        
-        if ($this->bulan && $this->tahun) {
-            $tanggalAwal = now()->setYear($this->tahun)->setMonth($this->bulan)->startOfMonth();
-            $saldoAwalQuery->where('tanggal_transaksi', '<', $tanggalAwal);
-        } elseif ($this->tahun) {
-            $tanggalAwal = now()->setYear($this->tahun)->startOfYear();
-            $saldoAwalQuery->where('tanggal_transaksi', '<', $tanggalAwal);
-        }
-        
-        $saldoTransaksi = $saldoAwalQuery->sum(\DB::raw("CASE WHEN jenis_transaksi = 'masuk' THEN jumlah ELSE -jumlah END"));
-        
-        $saldoAwal = ($saldoAwalManual ? $saldoAwalManual->jumlah : 0) + $saldoTransaksi;
-        
-        // Hitung saldo berjalan
-        $saldoBerjalan = $saldoAwal;
-        $dataWithSaldo = $transaksi->map(function ($item) use (&$saldoBerjalan) {
-            if ($item->jenis_transaksi === 'masuk') {
-                $saldoBerjalan += $item->jumlah;
-            } else {
-                $saldoBerjalan -= $item->jumlah;
-            }
-            
-            $item->saldo_berjalan = $saldoBerjalan;
-            return $item;
+        // Hitung sisa pinjaman
+        $pinjamanAktif = $pinjamanQuery->where('status_pinjaman', 'aktif')->get();
+        $totalSisaPinjaman = $pinjamanAktif->sum(function ($pinjaman) {
+            return $pinjaman->sisa_pinjaman;
         });
         
+        // Hitung pinjaman tersalurkan
+        $pinjamanTersalurkanQuery = Pinjaman::query();
+        
+        if ($this->desa_id) {
+            $pinjamanTersalurkanQuery->where('desa_id', $this->desa_id);
+        } elseif ($this->kecamatan_id) {
+            $pinjamanTersalurkanQuery->whereHas('desa', fn($q) => $q->where('kecamatan_id', $this->kecamatan_id));
+        } elseif ($user->isAdminKecamatan()) {
+            $pinjamanTersalurkanQuery->whereHas('desa', fn($q) => $q->where('kecamatan_id', $user->kecamatan_id));
+        } elseif ($user->isAdminDesa()) {
+            $pinjamanTersalurkanQuery->where('desa_id', $user->desa_id);
+        }
+        
+        if ($this->bulan && $this->tahun) {
+            $pinjamanTersalurkanQuery->whereMonth('tanggal_pinjaman', $this->bulan)
+                                    ->whereYear('tanggal_pinjaman', $this->tahun);
+        } elseif ($this->tahun) {
+            $pinjamanTersalurkanQuery->whereYear('tanggal_pinjaman', $this->tahun);
+        }
+        
+        $totalPinjamanTersalurkan = $pinjamanTersalurkanQuery->sum('jumlah_pinjaman');
+        $totalPokokTerbayar = (clone $angsuranQuery)->sum('angsuran_pinjaman.pokok_dibayar');
+        
         return [
-            'transaksi' => $dataWithSaldo,
-            'saldoAwal' => $saldoAwal,
+            'totalPendapatanJasa' => $totalPendapatanJasa,
+            'totalPendapatanDenda' => $totalPendapatanDenda,
+            'totalPendapatan' => $totalPendapatan,
+            'totalShu' => $totalShu,
+            'persentaseShu' => $persentaseShu,
+            'totalSisaPinjaman' => $totalSisaPinjaman,
+            'totalPinjamanTersalurkan' => $totalPinjamanTersalurkan,
+            'totalPokokTerbayar' => $totalPokokTerbayar,
+            'jumlahPinjamanAktif' => $pinjamanAktif->count(),
         ];
     }
 
@@ -240,23 +233,6 @@ class BukuKas extends Component
         $user = Auth::user();
         
         $reportData = $this->getReportData();
-        $transaksi = $reportData['transaksi'];
-        $saldoAwal = $reportData['saldoAwal'];
-        
-        // Get saldo awal manual
-        $saldoAwalManualQuery = TransaksiKas::query()->where('jenis_transaksi', 'saldo_awal');
-        
-        if ($this->desa_id) {
-            $saldoAwalManualQuery->where('desa_id', $this->desa_id);
-        } elseif ($this->kecamatan_id) {
-            $saldoAwalManualQuery->whereHas('desa', fn($q) => $q->where('kecamatan_id', $this->kecamatan_id));
-        } elseif ($user->isAdminKecamatan()) {
-            $saldoAwalManualQuery->whereHas('desa', fn($q) => $q->where('kecamatan_id', $user->kecamatan_id));
-        } elseif ($user->isAdminDesa()) {
-            $saldoAwalManualQuery->where('desa_id', $user->desa_id);
-        }
-        
-        $saldoAwalManual = $saldoAwalManualQuery->first();
         
         // Generate list bulan untuk dropdown
         $bulanList = collect(range(1, 12))->map(function ($m) {
@@ -286,15 +262,12 @@ class BukuKas extends Component
             $desaList = Desa::where('kecamatan_id', $user->kecamatan_id)->orderBy('nama_desa')->get();
         }
         
-        return view('livewire.laporan.buku-kas', [
-            'transaksi' => $transaksi,
-            'saldoAwal' => $saldoAwal,
-            'saldoAwalManual' => $saldoAwalManual,
+        return view('livewire.laporan.laporan-akhir-usp', array_merge($reportData, [
             'bulanList' => $bulanList,
             'tahunList' => $tahunList,
             'kecamatanList' => $kecamatanList,
             'desaList' => $desaList,
             'user' => $user,
-        ]);
+        ]));
     }
 }
