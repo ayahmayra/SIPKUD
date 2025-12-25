@@ -23,6 +23,7 @@ class Edit extends Component
     public ?string $telepon = null;
     public ?string $warna_tema = null;
     public ?string $base_title = null;
+    public ?float $persentase_shu = 20;
     public ?string $logo_instansi_path = null;
     public ?string $favicon_path = null;
 
@@ -37,6 +38,7 @@ class Edit extends Component
         $this->telepon = $this->pengaturan->telepon;
         $this->warna_tema = $this->pengaturan->warna_tema;
         $this->base_title = $this->pengaturan->base_title;
+        $this->persentase_shu = $this->pengaturan->persentase_shu ?? 20;
         $this->logo_instansi_path = $this->pengaturan->logo_instansi;
         $this->favicon_path = $this->pengaturan->favicon;
     }
@@ -73,6 +75,7 @@ class Edit extends Component
                 'telepon' => ['nullable', 'string', 'max:50'],
                 'warna_tema' => ['nullable', 'string', 'max:50'],
                 'base_title' => ['nullable', 'string', 'max:255'],
+                'persentase_shu' => ['required', 'numeric', 'min:0', 'max:100'],
             ], [
                 'nama_instansi.required' => 'Nama instansi wajib diisi.',
                 'nama_daerah.required' => 'Nama daerah wajib diisi.',
@@ -80,6 +83,10 @@ class Edit extends Component
                 'logo_instansi.max' => 'Ukuran logo maksimal 2MB.',
                 'favicon.image' => 'Favicon harus berupa gambar (JPG, PNG, GIF, ICO).',
                 'favicon.max' => 'Ukuran favicon maksimal 512KB.',
+                'persentase_shu.required' => 'Persentase SHU wajib diisi.',
+                'persentase_shu.numeric' => 'Persentase SHU harus berupa angka.',
+                'persentase_shu.min' => 'Persentase SHU minimal 0%.',
+                'persentase_shu.max' => 'Persentase SHU maksimal 100%.',
             ]);
 
             // Handle logo upload

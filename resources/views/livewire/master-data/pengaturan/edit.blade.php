@@ -97,6 +97,24 @@
             />
             <flux:error name="telepon" />
 
+            <div>
+                <flux:input 
+                    wire:model="persentase_shu" 
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    label="Persentase SHU (%)" 
+                    placeholder="Contoh: 20"
+                    required
+                />
+                <flux:error name="persentase_shu" />
+                <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                    Persentase Sisa Hasil Usaha yang dihitung dari total pendapatan (jasa + denda). 
+                    Nilai antara 0-100%.
+                </p>
+            </div>
+
             <flux:input 
                 wire:model="warna_tema" 
                 label="Warna Tema (Hex Code)" 

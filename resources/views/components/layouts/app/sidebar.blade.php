@@ -38,6 +38,7 @@
                     <flux:navlist.group :heading="__('Laporan')" class="grid">
                         <flux:navlist.item icon="document-chart-bar" :href="route('laporan.lpp-ued')" :current="request()->routeIs('laporan.lpp-ued')" wire:navigate>{{ __('LPP UED') }}</flux:navlist.item>
                         <flux:navlist.item icon="wallet" :href="route('laporan.buku-kas')" :current="request()->routeIs('laporan.buku-kas')" wire:navigate>{{ __('Buku Kas') }}</flux:navlist.item>
+                        <flux:navlist.item icon="chart-bar" :href="route('laporan.akhir-usp')" :current="request()->routeIs('laporan.akhir-usp')" wire:navigate>{{ __('Laporan Akhir USP') }}</flux:navlist.item>
                     </flux:navlist.group>
                 </flux:navlist>
 
@@ -66,6 +67,7 @@
                     <flux:navlist.group :heading="__('Laporan')" class="grid">
                         <flux:navlist.item icon="document-chart-bar" :href="route('laporan.lpp-ued')" :current="request()->routeIs('laporan.lpp-ued')" wire:navigate>{{ __('LPP UED') }}</flux:navlist.item>
                         <flux:navlist.item icon="wallet" :href="route('laporan.buku-kas')" :current="request()->routeIs('laporan.buku-kas')" wire:navigate>{{ __('Buku Kas') }}</flux:navlist.item>
+                        <flux:navlist.item icon="chart-bar" :href="route('laporan.akhir-usp')" :current="request()->routeIs('laporan.akhir-usp')" wire:navigate>{{ __('Laporan Akhir USP') }}</flux:navlist.item>
                     </flux:navlist.group>
                 </flux:navlist>
 
@@ -75,12 +77,7 @@
                     </flux:navlist.group>
                 </flux:navlist>
 
-                <flux:navlist variant="outline">
-                    <flux:navlist.group :heading="__('Modul Akan Datang')" class="grid">
-                        <flux:navlist.item icon="book-open" disabled>{{ __('Jurnal') }}</flux:navlist.item>
-                        <flux:navlist.item icon="briefcase" disabled>{{ __('Aset') }}</flux:navlist.item>
-                    </flux:navlist.group>
-                </flux:navlist>
+                
             @else
                 <flux:navlist variant="outline">
                     <flux:navlist.group :heading="__('Master Data')" class="grid">
@@ -106,15 +103,11 @@
                     <flux:navlist.group :heading="__('Laporan')" class="grid">
                         <flux:navlist.item icon="document-chart-bar" :href="route('laporan.lpp-ued')" :current="request()->routeIs('laporan.lpp-ued')" wire:navigate>{{ __('LPP UED') }}</flux:navlist.item>
                         <flux:navlist.item icon="wallet" :href="route('laporan.buku-kas')" :current="request()->routeIs('laporan.buku-kas')" wire:navigate>{{ __('Buku Kas') }}</flux:navlist.item>
+                        <flux:navlist.item icon="chart-bar" :href="route('laporan.akhir-usp')" :current="request()->routeIs('laporan.akhir-usp')" wire:navigate>{{ __('Laporan Akhir USP') }}</flux:navlist.item>
                     </flux:navlist.group>
                 </flux:navlist>
 
-                <flux:navlist variant="outline">
-                    <flux:navlist.group :heading="__('Modul Akan Datang')" class="grid">
-                        <flux:navlist.item icon="book-open" disabled>{{ __('Jurnal') }}</flux:navlist.item>
-                        <flux:navlist.item icon="briefcase" disabled>{{ __('Aset') }}</flux:navlist.item>
-                    </flux:navlist.group>
-                </flux:navlist>
+                
             @endif
 
             <flux:spacer />

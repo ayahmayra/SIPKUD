@@ -31,6 +31,11 @@ class Pengaturan extends Model
         'telepon',
         'warna_tema',
         'base_title',
+        'persentase_shu',
+    ];
+
+    protected $casts = [
+        'persentase_shu' => 'decimal:2',
     ];
 
     /**

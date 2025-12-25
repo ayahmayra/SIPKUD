@@ -68,6 +68,7 @@ Route::middleware(['auth'])->group(function () {
         // Laporan
         Route::get('laporan/lpp-ued', \App\Livewire\Laporan\LppUed::class)->name('laporan.lpp-ued');
         Route::get('laporan/buku-kas', \App\Livewire\Laporan\BukuKas::class)->name('laporan.buku-kas');
+        Route::get('laporan/akhir-usp', \App\Livewire\Laporan\LaporanAkhirUsp::class)->name('laporan.akhir-usp');
     });
 
     // Admin Desa Routes - Create & Edit (admin kecamatan tidak bisa)
