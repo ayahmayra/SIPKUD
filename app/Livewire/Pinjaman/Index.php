@@ -2,13 +2,16 @@
 
 namespace App\Livewire\Pinjaman;
 
+use App\Exports\PinjamanExport;
 use App\Models\Anggota;
 use App\Models\Pinjaman;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 #[Layout('components.layouts.app', ['title' => 'Master Pinjaman'])]
 class Index extends Component
@@ -71,6 +74,108 @@ class Index extends Component
         
         $pinjaman->delete();
         $this->dispatch('success', message: 'Pinjaman berhasil dihapus.');
+    }
+
+    public function exportExcel(): StreamedResponse
+    {
+        $pinjaman = $this->getPinjamanQuery()->get();
+        
+        $kecamatanNama = null;
+        $desaNama = null;
+        
+        if ($this->kecamatanFilter) {
+            $kecamatan = \App\Models\Kecamatan::find($this->kecamatanFilter);
+            $kecamatanNama = $kecamatan?->nama_kecamatan;
+        }
+        
+        if ($this->desaFilter) {
+            $desa = \App\Models\Desa::find($this->desaFilter);
+            $desaNama = $desa?->nama_desa;
+        }
+        
+        $export = new PinjamanExport(
+            $pinjaman,
+            $kecamatanNama,
+            $desaNama,
+            $this->statusFilter ?: null
+        );
+        
+        $fileName = 'master-pinjaman-' . now()->format('Y-m-d-His') . '.xlsx';
+        $tempFile = storage_path('app/temp/' . $fileName);
+        
+        // Ensure temp directory exists
+        if (!file_exists(storage_path('app/temp'))) {
+            mkdir(storage_path('app/temp'), 0755, true);
+        }
+        
+        $export->export($tempFile);
+        
+        return response()->stream(function () use ($tempFile) {
+            echo file_get_contents($tempFile);
+            unlink($tempFile);
+        }, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+        ]);
+    }
+
+    public function exportPdf()
+    {
+        $pinjaman = $this->getPinjamanQuery()->get();
+        $user = Auth::user();
+        
+        $kecamatanNama = null;
+        $desaNama = null;
+        
+        if ($this->kecamatanFilter) {
+            $kecamatan = \App\Models\Kecamatan::find($this->kecamatanFilter);
+            $kecamatanNama = $kecamatan?->nama_kecamatan;
+        }
+        
+        if ($this->desaFilter) {
+            $desa = \App\Models\Desa::find($this->desaFilter);
+            $desaNama = $desa?->nama_desa;
+        }
+        
+        $pdf = Pdf::loadView('pdf.master-pinjaman', [
+            'pinjaman' => $pinjaman,
+            'kecamatanNama' => $kecamatanNama,
+            'desaNama' => $desaNama,
+            'statusFilter' => $this->statusFilter ?: null,
+            'user' => $user,
+        ])->setPaper('a4', 'landscape');
+        
+        $fileName = 'master-pinjaman-' . now()->format('Y-m-d-His') . '.pdf';
+        
+        return response()->streamDownload(function () use ($pdf) {
+            echo $pdf->output();
+        }, $fileName);
+    }
+
+    protected function getPinjamanQuery()
+    {
+        return Pinjaman::with(['anggota', 'desa.kecamatan'])
+            ->when($this->search, function ($query) {
+                $query->where(function ($q) {
+                    $q->where('nomor_pinjaman', 'like', '%' . $this->search . '%')
+                        ->orWhereHas('anggota', function ($q) {
+                            $q->where('nama', 'like', '%' . $this->search . '%');
+                        });
+                });
+            })
+            ->when($this->statusFilter, function ($query) {
+                $query->where('status_pinjaman', $this->statusFilter);
+            })
+            ->when($this->kecamatanFilter, function ($query) {
+                $query->whereHas('desa', function ($q) {
+                    $q->where('kecamatan_id', $this->kecamatanFilter);
+                });
+            })
+            ->when($this->desaFilter, function ($query) {
+                $query->where('desa_id', $this->desaFilter);
+            })
+            ->orderBy('tanggal_pinjaman', 'desc')
+            ->orderBy('nomor_pinjaman', 'desc');
     }
 
     public function render()

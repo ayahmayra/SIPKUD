@@ -2,13 +2,16 @@
 
 namespace App\Livewire\Angsuran;
 
+use App\Exports\AngsuranExport;
 use App\Models\AngsuranPinjaman;
 use App\Models\Pinjaman;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 #[Layout('components.layouts.app', ['title' => 'Master Angsuran'])]
 class Index extends Component
@@ -67,6 +70,124 @@ class Index extends Component
         $angsuran->delete();
         
         $this->dispatch('success', message: 'Angsuran berhasil dihapus.');
+    }
+
+    public function exportExcel(): StreamedResponse
+    {
+        $angsuran = $this->getAngsuranQuery()->get();
+        
+        $kecamatanNama = null;
+        $desaNama = null;
+        $pinjamanNomor = null;
+        
+        if ($this->kecamatanFilter) {
+            $kecamatan = \App\Models\Kecamatan::find($this->kecamatanFilter);
+            $kecamatanNama = $kecamatan?->nama_kecamatan;
+        }
+        
+        if ($this->desaFilter) {
+            $desa = \App\Models\Desa::find($this->desaFilter);
+            $desaNama = $desa?->nama_desa;
+        }
+        
+        if ($this->pinjamanFilter) {
+            $pinjaman = Pinjaman::find($this->pinjamanFilter);
+            $pinjamanNomor = $pinjaman?->nomor_pinjaman;
+        }
+        
+        $export = new AngsuranExport(
+            $angsuran,
+            $kecamatanNama,
+            $desaNama,
+            $pinjamanNomor
+        );
+        
+        $fileName = 'master-angsuran-' . now()->format('Y-m-d-His') . '.xlsx';
+        $tempFile = storage_path('app/temp/' . $fileName);
+        
+        // Ensure temp directory exists
+        if (!file_exists(storage_path('app/temp'))) {
+            mkdir(storage_path('app/temp'), 0755, true);
+        }
+        
+        $export->export($tempFile);
+        
+        return response()->stream(function () use ($tempFile) {
+            echo file_get_contents($tempFile);
+            unlink($tempFile);
+        }, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+        ]);
+    }
+
+    public function exportPdf()
+    {
+        $angsuran = $this->getAngsuranQuery()->get();
+        $user = Auth::user();
+        
+        $kecamatanNama = null;
+        $desaNama = null;
+        $pinjamanNomor = null;
+        
+        if ($this->kecamatanFilter) {
+            $kecamatan = \App\Models\Kecamatan::find($this->kecamatanFilter);
+            $kecamatanNama = $kecamatan?->nama_kecamatan;
+        }
+        
+        if ($this->desaFilter) {
+            $desa = \App\Models\Desa::find($this->desaFilter);
+            $desaNama = $desa?->nama_desa;
+        }
+        
+        if ($this->pinjamanFilter) {
+            $pinjaman = Pinjaman::find($this->pinjamanFilter);
+            $pinjamanNomor = $pinjaman?->nomor_pinjaman;
+        }
+        
+        $pdf = Pdf::loadView('pdf.master-angsuran', [
+            'angsuran' => $angsuran,
+            'kecamatanNama' => $kecamatanNama,
+            'desaNama' => $desaNama,
+            'pinjamanNomor' => $pinjamanNomor,
+            'user' => $user,
+        ])->setPaper('a4', 'landscape');
+        
+        $fileName = 'master-angsuran-' . now()->format('Y-m-d-His') . '.pdf';
+        
+        return response()->streamDownload(function () use ($pdf) {
+            echo $pdf->output();
+        }, $fileName);
+    }
+
+    protected function getAngsuranQuery()
+    {
+        return AngsuranPinjaman::with(['pinjaman.anggota', 'pinjaman.desa.kecamatan'])
+            ->when($this->search, function ($query) {
+                $query->where(function ($q) {
+                    $q->whereHas('pinjaman', function ($q) {
+                        $q->where('nomor_pinjaman', 'like', '%' . $this->search . '%')
+                            ->orWhereHas('anggota', function ($q) {
+                                $q->where('nama', 'like', '%' . $this->search . '%');
+                            });
+                    });
+                });
+            })
+            ->when($this->pinjamanFilter, function ($query) {
+                $query->where('pinjaman_id', $this->pinjamanFilter);
+            })
+            ->when($this->kecamatanFilter, function ($query) {
+                $query->whereHas('pinjaman.desa', function ($q) {
+                    $q->where('kecamatan_id', $this->kecamatanFilter);
+                });
+            })
+            ->when($this->desaFilter, function ($query) {
+                $query->whereHas('pinjaman', function ($q) {
+                    $q->where('desa_id', $this->desaFilter);
+                });
+            })
+            ->orderBy('tanggal_bayar', 'desc')
+            ->orderBy('angsuran_ke', 'desc');
     }
 
     public function render()
