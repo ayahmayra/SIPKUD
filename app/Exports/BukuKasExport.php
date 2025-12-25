@@ -151,7 +151,7 @@ class BukuKasExport
 
             $sheet->setCellValue('A' . $row, $no++);
             $sheet->setCellValue('B' . $row, $item->tanggal_transaksi->format('d/m/Y'));
-            $sheet->setCellValue('C' . $row, $item->keterangan ?? '-');
+            $sheet->setCellValue('C' . $row, $item->uraian ?? '-');
             $sheet->setCellValue('D' . $row, $item->jenis_transaksi === 'masuk' ? $item->jumlah : '');
             $sheet->setCellValue('E' . $row, $item->jenis_transaksi === 'keluar' ? $item->jumlah : '');
             $sheet->setCellValue('F' . $row, $saldoBerjalan);

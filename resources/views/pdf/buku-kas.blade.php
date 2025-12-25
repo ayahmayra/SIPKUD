@@ -128,7 +128,7 @@
                 <tr>
                     <td class="text-center">{{ $no++ }}</td>
                     <td>{{ $item->tanggal_transaksi->format('d/m/Y') }}</td>
-                    <td>{{ $item->keterangan ?? '-' }}</td>
+                    <td>{{ $item->uraian ?? '-' }}</td>
                     <td class="text-right">
                         @if($item->jenis_transaksi === 'masuk')
                             Rp {{ number_format($item->jumlah, 0, ',', '.') }}
