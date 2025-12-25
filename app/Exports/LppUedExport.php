@@ -5,8 +5,6 @@ namespace App\Exports;
 use Illuminate\Support\Collection;
 use OpenSpout\Writer\XLSX\Writer;
 use OpenSpout\Common\Entity\Row;
-use OpenSpout\Common\Entity\Style\Style;
-use OpenSpout\Common\Entity\Style\Color;
 
 class LppUedExport
 {
@@ -35,19 +33,7 @@ class LppUedExport
         $writer = new Writer();
         $writer->openToFile($filePath);
 
-        // Header style
-        $headerStyle = new Style();
-        $headerStyle->setFontBold();
-        $headerStyle->setFontSize(12);
-        $headerStyle->setBackgroundColor(Color::rgb(79, 129, 189));
-        $headerStyle->setFontColor(Color::WHITE);
-
-        // Title style
-        $titleStyle = new Style();
-        $titleStyle->setFontBold();
-        $titleStyle->setFontSize(14);
-
-        $writer->addRow(Row::fromValues(['LAPORAN LPP UED'], $titleStyle));
+        $writer->addRow(Row::fromValues(['LAPORAN LPP UED']));
         
         // Periode
         $periode = '';
@@ -83,7 +69,7 @@ class LppUedExport
             'Sisa Pinjaman',
             'Status'
         ];
-        $writer->addRow(Row::fromValues($headers, $headerStyle));
+        $writer->addRow(Row::fromValues($headers));
 
         // Data rows
         $no = 1;
@@ -119,10 +105,6 @@ class LppUedExport
         }
 
         // Total row
-        $totalStyle = new Style();
-        $totalStyle->setFontBold();
-        $totalStyle->setBackgroundColor(Color::rgb(217, 217, 217));
-
         $writer->addRow(Row::fromValues([
             '',
             '',
@@ -133,7 +115,7 @@ class LppUedExport
             number_format($totalJasa, 0, ',', '.'),
             number_format($totalSisaPinjaman, 0, ',', '.'),
             ''
-        ], $totalStyle));
+        ]));
 
         $writer->close();
     }

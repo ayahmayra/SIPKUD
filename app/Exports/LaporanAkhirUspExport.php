@@ -4,8 +4,6 @@ namespace App\Exports;
 
 use OpenSpout\Writer\XLSX\Writer;
 use OpenSpout\Common\Entity\Row;
-use OpenSpout\Common\Entity\Style\Style;
-use OpenSpout\Common\Entity\Style\Color;
 
 class LaporanAkhirUspExport
 {
@@ -34,23 +32,7 @@ class LaporanAkhirUspExport
         $writer = new Writer();
         $writer->openToFile($filePath);
 
-        // Title style
-        $titleStyle = new Style();
-        $titleStyle->setFontBold();
-        $titleStyle->setFontSize(14);
-
-        // Header style
-        $headerStyle = new Style();
-        $headerStyle->setFontBold();
-        $headerStyle->setFontSize(11);
-        $headerStyle->setBackgroundColor(Color::rgb(79, 129, 189));
-        $headerStyle->setFontColor(Color::WHITE);
-
-        // Subtitle style
-        $subtitleStyle = new Style();
-        $subtitleStyle->setFontBold();
-
-        $writer->addRow(Row::fromValues(['LAPORAN AKHIR USP'], $titleStyle));
+        $writer->addRow(Row::fromValues(['LAPORAN AKHIR USP']));
         
         // Periode
         $periode = '';
@@ -75,7 +57,7 @@ class LaporanAkhirUspExport
         $writer->addRow(Row::fromValues([''])); // Empty row
 
         // Data sections
-        $writer->addRow(Row::fromValues(['PENDAPATAN'], $subtitleStyle));
+        $writer->addRow(Row::fromValues(['PENDAPATAN']));
         $writer->addRow(Row::fromValues([
             'Pendapatan Jasa',
             'Rp ' . number_format($this->data['totalPendapatanJasa'], 0, ',', '.')
@@ -87,11 +69,11 @@ class LaporanAkhirUspExport
         $writer->addRow(Row::fromValues([
             'Total Pendapatan',
             'Rp ' . number_format($this->data['totalPendapatan'], 0, ',', '.')
-        ], $subtitleStyle));
+        ]));
         
         $writer->addRow(Row::fromValues([''])); // Empty row
         
-        $writer->addRow(Row::fromValues(['SISA HASIL USAHA (SHU)'], $subtitleStyle));
+        $writer->addRow(Row::fromValues(['SISA HASIL USAHA (SHU)']));
         $writer->addRow(Row::fromValues([
             "SHU ({$this->data['persentaseShu']}% dari Total Pendapatan)",
             'Rp ' . number_format($this->data['totalShu'], 0, ',', '.')
@@ -99,7 +81,7 @@ class LaporanAkhirUspExport
         
         $writer->addRow(Row::fromValues([''])); // Empty row
         
-        $writer->addRow(Row::fromValues(['PINJAMAN'], $subtitleStyle));
+        $writer->addRow(Row::fromValues(['PINJAMAN']));
         $writer->addRow(Row::fromValues([
             'Total Pinjaman Tersalurkan',
             'Rp ' . number_format($this->data['totalPinjamanTersalurkan'], 0, ',', '.')
@@ -115,7 +97,7 @@ class LaporanAkhirUspExport
         $writer->addRow(Row::fromValues([
             'Total Sisa Pinjaman',
             'Rp ' . number_format($this->data['totalSisaPinjaman'], 0, ',', '.')
-        ], $subtitleStyle));
+        ]));
 
         $writer->close();
     }

@@ -6,10 +6,6 @@ use App\Models\TransaksiKas;
 use Illuminate\Support\Collection;
 use OpenSpout\Writer\XLSX\Writer;
 use OpenSpout\Common\Entity\Row;
-use OpenSpout\Common\Entity\Cell;
-use OpenSpout\Common\Entity\Style\Style;
-use OpenSpout\Common\Entity\Style\Color;
-use OpenSpout\Writer\XLSX\Options;
 
 class BukuKasExport
 {
@@ -41,19 +37,7 @@ class BukuKasExport
         $writer = new Writer();
         $writer->openToFile($filePath);
 
-        // Header style
-        $headerStyle = new Style();
-        $headerStyle->setFontBold();
-        $headerStyle->setFontSize(12);
-        $headerStyle->setBackgroundColor(Color::rgb(79, 129, 189));
-        $headerStyle->setFontColor(Color::WHITE);
-
-        // Title
-        $titleStyle = new Style();
-        $titleStyle->setFontBold();
-        $titleStyle->setFontSize(14);
-
-        $writer->addRow(Row::fromValues(['BUKU KAS USP'], $titleStyle));
+        $writer->addRow(Row::fromValues(['BUKU KAS USP']));
         
         // Periode
         $periode = '';
@@ -86,7 +70,7 @@ class BukuKasExport
             'Kredit',
             'Saldo'
         ];
-        $writer->addRow(Row::fromValues($headers, $headerStyle));
+        $writer->addRow(Row::fromValues($headers));
 
         // Saldo awal row
         $writer->addRow(Row::fromValues([
