@@ -86,6 +86,72 @@
                             </p>
                         </div>
 
+                        <!-- Akun Kas -->
+                        <div>
+                            <label for="akun_kas_id" class="block text-sm font-medium text-gray-700 mb-2">
+                                Akun Kas <span class="text-red-500">*</span>
+                            </label>
+                            <select 
+                                id="akun_kas_id" 
+                                wire:model="akun_kas_id"
+                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 @error('akun_kas_id') border-red-500 @enderror"
+                            >
+                                <option value="">-- Pilih Akun Kas --</option>
+                                @foreach($akunKas as $akun)
+                                    <option value="{{ $akun->id }}">{{ $akun->kode_akun }} - {{ $akun->nama_akun }}</option>
+                                @endforeach
+                            </select>
+                            @error('akun_kas_id')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                            <p class="mt-1 text-xs text-gray-500">
+                                Pilih akun kas yang akan digunakan (Kas, Bank, Kas Kecil)
+                            </p>
+                        </div>
+
+                        <!-- Akun Lawan -->
+                        <div>
+                            <label for="akun_lawan_id" class="block text-sm font-medium text-gray-700 mb-2">
+                                Akun Lawan (Modal) <span class="text-red-500">*</span>
+                            </label>
+                            <select 
+                                id="akun_lawan_id" 
+                                wire:model="akun_lawan_id"
+                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 @error('akun_lawan_id') border-red-500 @enderror"
+                            >
+                                <option value="">-- Pilih Akun Modal --</option>
+                                @foreach($akunLawan as $akun)
+                                    <option value="{{ $akun->id }}">{{ $akun->kode_akun }} - {{ $akun->nama_akun }}</option>
+                                @endforeach
+                            </select>
+                            @error('akun_lawan_id')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                            <p class="mt-1 text-xs text-gray-500">
+                                Pilih akun modal yang akan digunakan (Modal, Laba Ditahan, dll)
+                            </p>
+                        </div>
+
+                        <!-- Unit Usaha -->
+                        <div>
+                            <label for="unit_usaha_id" class="block text-sm font-medium text-gray-700 mb-2">
+                                Unit Usaha <span class="text-gray-400">(Opsional)</span>
+                            </label>
+                            <select 
+                                id="unit_usaha_id" 
+                                wire:model="unit_usaha_id"
+                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            >
+                                <option value="">-- Semua Unit Usaha --</option>
+                                @foreach($unitUsaha as $unit)
+                                    <option value="{{ $unit->id }}">{{ $unit->kode_unit }} - {{ $unit->nama_unit }}</option>
+                                @endforeach
+                            </select>
+                            <p class="mt-1 text-xs text-gray-500">
+                                Pilih unit usaha jika saldo awal khusus untuk unit tertentu
+                            </p>
+                        </div>
+
                         <!-- Keterangan -->
                         <div>
                             <label for="keterangan" class="block text-sm font-medium text-gray-700 mb-2">
@@ -109,8 +175,10 @@
                             <ul class="text-sm text-gray-600 space-y-1 list-disc list-inside">
                                 <li>Saldo awal hanya perlu diinput <strong>sekali</strong> saat pertama kali migrasi dari sistem manual</li>
                                 <li>Pastikan jumlah sesuai dengan saldo terakhir di sistem Excel Anda</li>
-                                <li>Saldo awal akan digunakan sebagai dasar perhitungan semua laporan kas</li>
-                                <li>Jika salah input, Anda bisa mengubahnya melalui form ini</li>
+                                <li>Sistem akan <strong>otomatis membuat jurnal</strong>: Debit Akun Kas, Kredit Akun Modal</li>
+                                <li>Jurnal akan <strong>otomatis ter-post</strong> ke neraca saldo</li>
+                                <li>Saldo awal akan digunakan sebagai dasar perhitungan semua laporan kas dan akuntansi</li>
+                                <li>Jika salah input, Anda bisa mengubahnya melalui form ini (kecuali periode sudah di-close)</li>
                             </ul>
                         </div>
 

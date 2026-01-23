@@ -77,15 +77,67 @@ class Pinjaman extends Model
     {
         parent::boot();
 
-        // Otomatis buat transaksi kas keluar saat pinjaman dibuat
+        // Otomatis buat transaksi kas keluar dan jurnal saat pinjaman dibuat
         static::created(function (Pinjaman $pinjaman) {
-            TransaksiKas::create([
+            $pinjaman->load('anggota');
+            
+            // Get akun
+            $akunKas = \App\Models\Akun::where('desa_id', $pinjaman->desa_id)
+                ->where('nama_akun', 'Kas')
+                ->first();
+            
+            $akunPiutang = \App\Models\Akun::where('desa_id', $pinjaman->desa_id)
+                ->where('nama_akun', 'Piutang Pinjaman Anggota')
+                ->first();
+            
+            if (!$akunKas || !$akunPiutang) {
+                \Illuminate\Support\Facades\Log::warning("Akun tidak ditemukan untuk pinjaman {$pinjaman->id}");
+                return;
+            }
+            
+            // Get unit usaha USP
+            $unitUsaha = \App\Models\UnitUsaha::where('desa_id', $pinjaman->desa_id)
+                ->where('kode_unit', 'USP')
+                ->first();
+            
+            // Create TransaksiKas
+            $transaksiKas = TransaksiKas::create([
                 'desa_id' => $pinjaman->desa_id,
+                'unit_usaha_id' => $unitUsaha?->id,
                 'tanggal_transaksi' => $pinjaman->tanggal_pinjaman,
                 'uraian' => "Pencairan Pinjaman - {$pinjaman->nomor_pinjaman} - {$pinjaman->anggota->nama}",
                 'jenis_transaksi' => 'keluar',
+                'akun_kas_id' => $akunKas->id,
+                'akun_lawan_id' => $akunPiutang->id,
                 'jumlah' => $pinjaman->jumlah_pinjaman,
                 'pinjaman_id' => $pinjaman->id,
+            ]);
+            
+            // Auto-create Jurnal
+            $accountingService = app(\App\Services\AccountingService::class);
+            $accountingService->createJurnal([
+                'desa_id' => $pinjaman->desa_id,
+                'unit_usaha_id' => $unitUsaha?->id,
+                'tanggal_transaksi' => $pinjaman->tanggal_pinjaman,
+                'jenis_jurnal' => 'kas_harian',
+                'keterangan' => "Pencairan Pinjaman - {$pinjaman->nomor_pinjaman} - {$pinjaman->anggota->nama}",
+                'status' => 'posted',
+                'transaksi_kas_id' => $transaksiKas->id,
+                'pinjaman_id' => $pinjaman->id,
+                'details' => [
+                    [
+                        'akun_id' => $akunPiutang->id,
+                        'posisi' => 'debit',
+                        'jumlah' => $pinjaman->jumlah_pinjaman,
+                        'keterangan' => 'Piutang pinjaman anggota',
+                    ],
+                    [
+                        'akun_id' => $akunKas->id,
+                        'posisi' => 'kredit',
+                        'jumlah' => $pinjaman->jumlah_pinjaman,
+                        'keterangan' => 'Kas keluar',
+                    ],
+                ],
             ]);
         });
     }

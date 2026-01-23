@@ -50,7 +50,7 @@ class AngsuranPinjaman extends Model
     {
         parent::boot();
 
-        // Auto-update status pinjaman dan buat transaksi kas masuk ketika angsuran dibuat
+        // Auto-update status pinjaman dan buat transaksi kas masuk + jurnal ketika angsuran dibuat
         static::created(function (AngsuranPinjaman $angsuran) {
             $angsuran->load('pinjaman.anggota');
             $pinjaman = $angsuran->pinjaman;
@@ -58,14 +58,98 @@ class AngsuranPinjaman extends Model
             // Update status pinjaman
             $pinjaman->updateStatusFromSisa();
             
-            // Buat transaksi kas masuk otomatis
-            TransaksiKas::create([
+            // Get akun
+            $akunKas = \App\Models\Akun::where('desa_id', $pinjaman->desa_id)
+                ->where('nama_akun', 'Kas')
+                ->first();
+            
+            $akunPiutang = \App\Models\Akun::where('desa_id', $pinjaman->desa_id)
+                ->where('nama_akun', 'Piutang Pinjaman Anggota')
+                ->first();
+            
+            $akunPendapatanJasa = \App\Models\Akun::where('desa_id', $pinjaman->desa_id)
+                ->where('nama_akun', 'like', '%Pendapatan Jasa Pinjaman%')
+                ->orWhere('nama_akun', 'like', '%Pendapatan Jasa%')
+                ->first();
+            
+            $akunPendapatanDenda = \App\Models\Akun::where('desa_id', $pinjaman->desa_id)
+                ->where('nama_akun', 'like', '%Denda%')
+                ->first();
+            
+            if (!$akunKas || !$akunPiutang) {
+                \Illuminate\Support\Facades\Log::warning("Akun tidak ditemukan untuk angsuran {$angsuran->id}");
+                return;
+            }
+            
+            // Get unit usaha USP
+            $unitUsaha = \App\Models\UnitUsaha::where('desa_id', $pinjaman->desa_id)
+                ->where('kode_unit', 'USP')
+                ->first();
+            
+            // Create TransaksiKas
+            $transaksiKas = TransaksiKas::create([
                 'desa_id' => $pinjaman->desa_id,
+                'unit_usaha_id' => $unitUsaha?->id,
                 'tanggal_transaksi' => $angsuran->tanggal_bayar,
                 'uraian' => "Pembayaran Angsuran ke-{$angsuran->angsuran_ke} - {$pinjaman->nomor_pinjaman} - {$pinjaman->anggota->nama}",
                 'jenis_transaksi' => 'masuk',
+                'akun_kas_id' => $akunKas->id,
+                'akun_lawan_id' => $akunPiutang->id, // Default, akan di-override di jurnal
                 'jumlah' => $angsuran->total_dibayar,
                 'angsuran_pinjaman_id' => $angsuran->id,
+            ]);
+            
+            // Auto-create Jurnal (multi-account)
+            $accountingService = app(\App\Services\AccountingService::class);
+            $details = [
+                [
+                    'akun_id' => $akunKas->id,
+                    'posisi' => 'debit',
+                    'jumlah' => $angsuran->total_dibayar,
+                    'keterangan' => 'Kas masuk',
+                ],
+            ];
+            
+            // Kredit: Piutang (pokok)
+            if ($angsuran->pokok_dibayar > 0) {
+                $details[] = [
+                    'akun_id' => $akunPiutang->id,
+                    'posisi' => 'kredit',
+                    'jumlah' => $angsuran->pokok_dibayar,
+                    'keterangan' => 'Pelunasan pokok pinjaman',
+                ];
+            }
+            
+            // Kredit: Pendapatan Jasa (jasa)
+            if ($angsuran->jasa_dibayar > 0 && $akunPendapatanJasa) {
+                $details[] = [
+                    'akun_id' => $akunPendapatanJasa->id,
+                    'posisi' => 'kredit',
+                    'jumlah' => $angsuran->jasa_dibayar,
+                    'keterangan' => 'Pendapatan jasa pinjaman',
+                ];
+            }
+            
+            // Kredit: Pendapatan Denda (denda, jika ada)
+            if ($angsuran->denda_dibayar > 0 && $akunPendapatanDenda) {
+                $details[] = [
+                    'akun_id' => $akunPendapatanDenda->id,
+                    'posisi' => 'kredit',
+                    'jumlah' => $angsuran->denda_dibayar,
+                    'keterangan' => 'Pendapatan denda keterlambatan',
+                ];
+            }
+            
+            $accountingService->createJurnal([
+                'desa_id' => $pinjaman->desa_id,
+                'unit_usaha_id' => $unitUsaha?->id,
+                'tanggal_transaksi' => $angsuran->tanggal_bayar,
+                'jenis_jurnal' => 'kas_harian',
+                'keterangan' => "Pembayaran Angsuran ke-{$angsuran->angsuran_ke} - {$pinjaman->nomor_pinjaman} - {$pinjaman->anggota->nama}",
+                'status' => 'posted',
+                'transaksi_kas_id' => $transaksiKas->id,
+                'angsuran_pinjaman_id' => $angsuran->id,
+                'details' => $details,
             ]);
         });
 

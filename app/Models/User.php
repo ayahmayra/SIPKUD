@@ -140,4 +140,46 @@ class User extends Authenticatable
     {
         return $this->isExecutiveView();
     }
+
+    /**
+     * Get list of accessible desa for current user based on role
+     */
+    public function getAccessibleDesas()
+    {
+        if ($this->isSuperAdmin()) {
+            // Super Admin dapat akses semua desa
+            return Desa::orderBy('nama_desa')->get();
+        }
+        
+        if ($this->isAdminKecamatan()) {
+            // Admin Kecamatan hanya dapat akses desa di kecamatannya
+            return Desa::where('kecamatan_id', $this->kecamatan_id)
+                       ->orderBy('nama_desa')
+                       ->get();
+        }
+        
+        if ($this->desa_id) {
+            // Admin Desa dan lainnya hanya dapat akses desanya sendiri
+            return Desa::where('id', $this->desa_id)->get();
+        }
+        
+        return collect([]);
+    }
+
+    /**
+     * Check if user can access specific desa
+     */
+    public function canAccessDesa(int $desaId): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+        
+        if ($this->isAdminKecamatan()) {
+            $desa = Desa::find($desaId);
+            return $desa && $desa->kecamatan_id == $this->kecamatan_id;
+        }
+        
+        return $this->desa_id == $desaId;
+    }
 }

@@ -14,12 +14,17 @@ class TransaksiKas extends Model
 
     protected $fillable = [
         'desa_id',
+        'unit_usaha_id',
         'tanggal_transaksi',
         'uraian',
         'jenis_transaksi',
+        'akun_kas_id',
+        'akun_lawan_id',
         'jumlah',
         'pinjaman_id',
         'angsuran_pinjaman_id',
+        'deleted_by',
+        'deleted_reason',
     ];
 
     protected $casts = [
@@ -49,5 +54,37 @@ class TransaksiKas extends Model
     public function angsuranPinjaman(): BelongsTo
     {
         return $this->belongsTo(AngsuranPinjaman::class);
+    }
+
+    /**
+     * Relasi ke Unit Usaha
+     */
+    public function unitUsaha(): BelongsTo
+    {
+        return $this->belongsTo(UnitUsaha::class);
+    }
+
+    /**
+     * Relasi ke Akun Kas
+     */
+    public function akunKas(): BelongsTo
+    {
+        return $this->belongsTo(Akun::class, 'akun_kas_id');
+    }
+
+    /**
+     * Relasi ke Akun Lawan
+     */
+    public function akunLawan(): BelongsTo
+    {
+        return $this->belongsTo(Akun::class, 'akun_lawan_id');
+    }
+
+    /**
+     * Relasi ke Jurnal (one to one)
+     */
+    public function jurnal(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Jurnal::class);
     }
 }

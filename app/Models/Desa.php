@@ -86,6 +86,22 @@ class Desa extends Model
     }
 
     /**
+     * Relasi ke unit usaha
+     */
+    public function unitUsaha(): HasMany
+    {
+        return $this->hasMany(UnitUsaha::class);
+    }
+
+    /**
+     * Relasi ke jurnal
+     */
+    public function jurnal(): HasMany
+    {
+        return $this->hasMany(Jurnal::class);
+    }
+
+    /**
      * Scope untuk filter aktif
      */
     public function scopeAktif($query)

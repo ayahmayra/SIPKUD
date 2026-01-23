@@ -14,6 +14,7 @@
             <flux:navlist variant="outline">
                 <flux:navlist.group :heading="__('Platform')" class="grid">
                     <flux:navlist.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>{{ __('Dashboard') }}</flux:navlist.item>
+                    <flux:navlist.item icon="book-open" :href="route('user-manual.index')" :current="request()->routeIs('user-manual.*')" wire:navigate>{{ __('User Manual') }}</flux:navlist.item>
                 </flux:navlist.group>
             </flux:navlist>
 
@@ -24,6 +25,8 @@
                         <flux:navlist.item icon="building-office" :href="route('desa.index')" :current="request()->routeIs('desa.*')" wire:navigate>{{ __('Desa') }}</flux:navlist.item>
                         <flux:navlist.item icon="user-group" :href="route('kelompok.index')" :current="request()->routeIs('kelompok.*')" wire:navigate>{{ __('Kelompok') }}</flux:navlist.item>
                         <flux:navlist.item icon="user" :href="route('anggota.index')" :current="request()->routeIs('anggota.*')" wire:navigate>{{ __('Anggota') }}</flux:navlist.item>
+                        <flux:navlist.item icon="chart-pie" :href="route('akun.index')" :current="request()->routeIs('akun.*')" wire:navigate>{{ __('Akun (COA)') }}</flux:navlist.item>
+                        <flux:navlist.item icon="briefcase" :href="route('unit-usaha.index')" :current="request()->routeIs('unit-usaha.*')" wire:navigate>{{ __('Unit Usaha') }}</flux:navlist.item>
                     </flux:navlist.group>
                 </flux:navlist>
 
@@ -35,10 +38,26 @@
                 </flux:navlist>
 
                 <flux:navlist variant="outline">
+                    <flux:navlist.group :heading="__('Akuntansi')" class="grid">
+                        <flux:navlist.item icon="banknotes" :href="route('kas.index')" :current="request()->routeIs('kas.index') || request()->routeIs('kas.create') || request()->routeIs('kas.edit')" wire:navigate>{{ __('Kas Harian') }}</flux:navlist.item>
+                        <flux:navlist.item icon="document-text" :href="route('memorial.index')" :current="request()->routeIs('memorial.*')" wire:navigate>{{ __('Buku Memorial') }}</flux:navlist.item>
+                    </flux:navlist.group>
+                </flux:navlist>
+
+                <flux:navlist variant="outline">
                     <flux:navlist.group :heading="__('Laporan')" class="grid">
                         <flux:navlist.item icon="document-chart-bar" :href="route('laporan.lpp-ued')" :current="request()->routeIs('laporan.lpp-ued')" wire:navigate>{{ __('LPP UED') }}</flux:navlist.item>
                         <flux:navlist.item icon="wallet" :href="route('laporan.buku-kas')" :current="request()->routeIs('laporan.buku-kas')" wire:navigate>{{ __('Buku Kas') }}</flux:navlist.item>
                         <flux:navlist.item icon="chart-bar" :href="route('laporan.akhir-usp')" :current="request()->routeIs('laporan.akhir-usp')" wire:navigate>{{ __('Laporan Akhir USP') }}</flux:navlist.item>
+                        <flux:navlist.item icon="scale" :href="route('laporan.neraca-saldo')" :current="request()->routeIs('laporan.neraca-saldo')" wire:navigate>{{ __('Neraca Saldo') }}</flux:navlist.item>
+                        <flux:navlist.item icon="presentation-chart-line" :href="route('laporan.laba-rugi')" :current="request()->routeIs('laporan.laba-rugi')" wire:navigate>{{ __('Laba Rugi') }}</flux:navlist.item>
+                        <flux:navlist.item icon="clipboard-document-list" :href="route('laporan.neraca')" :current="request()->routeIs('laporan.neraca')" wire:navigate>{{ __('Neraca') }}</flux:navlist.item>
+                    </flux:navlist.group>
+                </flux:navlist>
+
+                <flux:navlist variant="outline">
+                    <flux:navlist.group :heading="__('Periode Akuntansi')" class="grid">
+                        <flux:navlist.item icon="calendar" :href="route('periode.index')" :current="request()->routeIs('periode.*')" wire:navigate>{{ __('Manajemen Periode') }}</flux:navlist.item>
                     </flux:navlist.group>
                 </flux:navlist>
 
@@ -54,6 +73,8 @@
                     <flux:navlist.group :heading="__('Master Data')" class="grid">
                         <flux:navlist.item icon="user-group" :href="route('kelompok.index')" :current="request()->routeIs('kelompok.*')" wire:navigate>{{ __('Kelompok') }}</flux:navlist.item>
                         <flux:navlist.item icon="user" :href="route('anggota.index')" :current="request()->routeIs('anggota.*')" wire:navigate>{{ __('Anggota') }}</flux:navlist.item>
+                        <flux:navlist.item icon="chart-pie" :href="route('akun.index')" :current="request()->routeIs('akun.*')" wire:navigate>{{ __('Akun (COA)') }}</flux:navlist.item>
+                        <flux:navlist.item icon="briefcase" :href="route('unit-usaha.index')" :current="request()->routeIs('unit-usaha.*')" wire:navigate>{{ __('Unit Usaha') }}</flux:navlist.item>
                     </flux:navlist.group>
                 </flux:navlist>
 
@@ -65,10 +86,26 @@
                 </flux:navlist>
 
                 <flux:navlist variant="outline">
+                    <flux:navlist.group :heading="__('Akuntansi')" class="grid">
+                        <flux:navlist.item icon="banknotes" :href="route('kas.index')" :current="request()->routeIs('kas.index') || request()->routeIs('kas.create') || request()->routeIs('kas.edit')" wire:navigate>{{ __('Kas Harian') }}</flux:navlist.item>
+                        <flux:navlist.item icon="document-text" :href="route('memorial.index')" :current="request()->routeIs('memorial.*')" wire:navigate>{{ __('Buku Memorial') }}</flux:navlist.item>
+                    </flux:navlist.group>
+                </flux:navlist>
+
+                <flux:navlist variant="outline">
                     <flux:navlist.group :heading="__('Laporan')" class="grid">
                         <flux:navlist.item icon="document-chart-bar" :href="route('laporan.lpp-ued')" :current="request()->routeIs('laporan.lpp-ued')" wire:navigate>{{ __('LPP UED') }}</flux:navlist.item>
                         <flux:navlist.item icon="wallet" :href="route('laporan.buku-kas')" :current="request()->routeIs('laporan.buku-kas')" wire:navigate>{{ __('Buku Kas') }}</flux:navlist.item>
                         <flux:navlist.item icon="chart-bar" :href="route('laporan.akhir-usp')" :current="request()->routeIs('laporan.akhir-usp')" wire:navigate>{{ __('Laporan Akhir USP') }}</flux:navlist.item>
+                        <flux:navlist.item icon="scale" :href="route('laporan.neraca-saldo')" :current="request()->routeIs('laporan.neraca-saldo')" wire:navigate>{{ __('Neraca Saldo') }}</flux:navlist.item>
+                        <flux:navlist.item icon="presentation-chart-line" :href="route('laporan.laba-rugi')" :current="request()->routeIs('laporan.laba-rugi')" wire:navigate>{{ __('Laba Rugi') }}</flux:navlist.item>
+                        <flux:navlist.item icon="clipboard-document-list" :href="route('laporan.neraca')" :current="request()->routeIs('laporan.neraca')" wire:navigate>{{ __('Neraca') }}</flux:navlist.item>
+                    </flux:navlist.group>
+                </flux:navlist>
+
+                <flux:navlist variant="outline">
+                    <flux:navlist.group :heading="__('Periode Akuntansi')" class="grid">
+                        <flux:navlist.item icon="calendar" :href="route('periode.index')" :current="request()->routeIs('periode.*')" wire:navigate>{{ __('Manajemen Periode') }}</flux:navlist.item>
                     </flux:navlist.group>
                 </flux:navlist>
 
@@ -84,6 +121,8 @@
                     <flux:navlist.group :heading="__('Master Data')" class="grid">
                         <flux:navlist.item icon="user-group" :href="route('kelompok.index')" :current="request()->routeIs('kelompok.*')" wire:navigate>{{ __('Kelompok') }}</flux:navlist.item>
                         <flux:navlist.item icon="user" :href="route('anggota.index')" :current="request()->routeIs('anggota.*')" wire:navigate>{{ __('Anggota') }}</flux:navlist.item>
+                        <flux:navlist.item icon="chart-pie" :href="route('akun.index')" :current="request()->routeIs('akun.*')" wire:navigate>{{ __('Akun (COA)') }}</flux:navlist.item>
+                        <flux:navlist.item icon="briefcase" :href="route('unit-usaha.index')" :current="request()->routeIs('unit-usaha.*')" wire:navigate>{{ __('Unit Usaha') }}</flux:navlist.item>
                     </flux:navlist.group>
                 </flux:navlist>
 
@@ -95,8 +134,10 @@
                 </flux:navlist>
 
                 <flux:navlist variant="outline">
-                    <flux:navlist.group :heading="__('Kas')" class="grid">
-                        <flux:navlist.item icon="calculator" :href="route('kas.saldo-awal')" :current="request()->routeIs('kas.saldo-awal')" wire:navigate>{{ __('Saldo Awal Kas') }}</flux:navlist.item>
+                    <flux:navlist.group :heading="__('Akuntansi')" class="grid">
+                        <flux:navlist.item icon="banknotes" :href="route('kas.index')" :current="request()->routeIs('kas.index') || request()->routeIs('kas.create') || request()->routeIs('kas.edit')" wire:navigate>{{ __('Kas Harian') }}</flux:navlist.item>
+                        <flux:navlist.item icon="calculator" :href="route('kas.saldo-awal')" :current="request()->routeIs('kas.saldo-awal')" wire:navigate>{{ __('Saldo Awal') }}</flux:navlist.item>
+                        <flux:navlist.item icon="document-text" :href="route('memorial.index')" :current="request()->routeIs('memorial.*')" wire:navigate>{{ __('Buku Memorial') }}</flux:navlist.item>
                     </flux:navlist.group>
                 </flux:navlist>
 
@@ -105,6 +146,15 @@
                         <flux:navlist.item icon="document-chart-bar" :href="route('laporan.lpp-ued')" :current="request()->routeIs('laporan.lpp-ued')" wire:navigate>{{ __('LPP UED') }}</flux:navlist.item>
                         <flux:navlist.item icon="wallet" :href="route('laporan.buku-kas')" :current="request()->routeIs('laporan.buku-kas')" wire:navigate>{{ __('Buku Kas') }}</flux:navlist.item>
                         <flux:navlist.item icon="chart-bar" :href="route('laporan.akhir-usp')" :current="request()->routeIs('laporan.akhir-usp')" wire:navigate>{{ __('Laporan Akhir USP') }}</flux:navlist.item>
+                        <flux:navlist.item icon="scale" :href="route('laporan.neraca-saldo')" :current="request()->routeIs('laporan.neraca-saldo')" wire:navigate>{{ __('Neraca Saldo') }}</flux:navlist.item>
+                        <flux:navlist.item icon="presentation-chart-line" :href="route('laporan.laba-rugi')" :current="request()->routeIs('laporan.laba-rugi')" wire:navigate>{{ __('Laba Rugi') }}</flux:navlist.item>
+                        <flux:navlist.item icon="clipboard-document-list" :href="route('laporan.neraca')" :current="request()->routeIs('laporan.neraca')" wire:navigate>{{ __('Neraca') }}</flux:navlist.item>
+                    </flux:navlist.group>
+                </flux:navlist>
+
+                <flux:navlist variant="outline">
+                    <flux:navlist.group :heading="__('Periode Akuntansi')" class="grid">
+                        <flux:navlist.item icon="calendar" :href="route('periode.index')" :current="request()->routeIs('periode.*')" wire:navigate>{{ __('Manajemen Periode') }}</flux:navlist.item>
                     </flux:navlist.group>
                 </flux:navlist>
 
