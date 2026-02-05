@@ -70,12 +70,12 @@
                             <div class="relative">
                                 <span class="absolute left-3 top-2.5 text-gray-500">Rp</span>
                                 <input 
-                                    type="number" 
+                                    type="text" 
                                     id="jumlah_saldo_awal" 
                                     wire:model="jumlah_saldo_awal"
-                                    step="0.01"
+                                    inputmode="decimal"
                                     class="w-full pl-12 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 @error('jumlah_saldo_awal') border-red-500 @enderror"
-                                    placeholder="0"
+                                    placeholder="0 (contoh: 30000000)"
                                 >
                             </div>
                             @error('jumlah_saldo_awal')
@@ -178,7 +178,7 @@
                                 <li>Sistem akan <strong>otomatis membuat jurnal</strong>: Debit Akun Kas, Kredit Akun Modal</li>
                                 <li>Jurnal akan <strong>otomatis ter-post</strong> ke neraca saldo</li>
                                 <li>Saldo awal akan digunakan sebagai dasar perhitungan semua laporan kas dan akuntansi</li>
-                                <li>Jika salah input, Anda bisa mengubahnya melalui form ini (kecuali periode sudah di-close)</li>
+                                <li>Jika salah input, Anda bisa mengubahnya kapan saja melalui form ini</li>
                             </ul>
                         </div>
 

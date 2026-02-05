@@ -35,6 +35,11 @@ class AppServiceProvider extends ServiceProvider
             return $user->isAdminDesa();
         });
 
+        // Gate untuk manage master akun (COA) - hanya Admin & Super Admin
+        Gate::define('manage_akun', function ($user) {
+            return $user->isSuperAdmin() || $user->isAdminKecamatan();
+        });
+
         // Gate untuk read-only access - admin kecamatan bisa melihat data di kecamatannya
         Gate::define('view_desa_data', function ($user) {
             return $user->isAdminDesa() || $user->isAdminKecamatan() || $user->isSuperAdmin();

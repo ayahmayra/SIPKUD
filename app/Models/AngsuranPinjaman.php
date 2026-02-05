@@ -59,20 +59,20 @@ class AngsuranPinjaman extends Model
             $pinjaman->updateStatusFromSisa();
             
             // Get akun
-            $akunKas = \App\Models\Akun::where('desa_id', $pinjaman->desa_id)
+            $akunKas = \App\Models\Akun::aktif()
                 ->where('nama_akun', 'Kas')
                 ->first();
             
-            $akunPiutang = \App\Models\Akun::where('desa_id', $pinjaman->desa_id)
+            $akunPiutang = \App\Models\Akun::aktif()
                 ->where('nama_akun', 'Piutang Pinjaman Anggota')
                 ->first();
             
-            $akunPendapatanJasa = \App\Models\Akun::where('desa_id', $pinjaman->desa_id)
+            $akunPendapatanJasa = \App\Models\Akun::aktif()
                 ->where('nama_akun', 'like', '%Pendapatan Jasa Pinjaman%')
                 ->orWhere('nama_akun', 'like', '%Pendapatan Jasa%')
                 ->first();
             
-            $akunPendapatanDenda = \App\Models\Akun::where('desa_id', $pinjaman->desa_id)
+            $akunPendapatanDenda = \App\Models\Akun::aktif()
                 ->where('nama_akun', 'like', '%Denda%')
                 ->first();
             

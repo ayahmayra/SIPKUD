@@ -159,7 +159,7 @@ class Edit extends Component
                                    ->orderBy('nama_unit')
                                    ->get();
         
-        $akunKasList = Akun::where('desa_id', $user->desa_id)
+        $akunKasList = Akun::aktif()
                            ->where('tipe_akun', 'aset')
                            ->where(function($q) {
                                $q->where('kode_akun', 'like', '1-10%')
@@ -170,7 +170,7 @@ class Edit extends Component
                            ->orderBy('kode_akun')
                            ->get();
         
-        $akunLawanList = Akun::where('desa_id', $user->desa_id)
+        $akunLawanList = Akun::aktif()
                              ->aktif()
                              ->orderBy('kode_akun')
                              ->get()

@@ -182,53 +182,11 @@ class TestingDataSeeder extends Seeder
     }
 
     /**
-     * Create Akun (COA)
+     * Create Akun (COA) - global, digunakan seluruh desa
      */
     protected function createAkun(): void
     {
-        // Create akun langsung untuk desa ini
-        $chartOfAccounts = [
-            // ASET
-            ['kode_akun' => '1-1000', 'nama_akun' => 'Kas', 'tipe_akun' => 'aset'],
-            ['kode_akun' => '1-1010', 'nama_akun' => 'Bank', 'tipe_akun' => 'aset'],
-            ['kode_akun' => '1-1100', 'nama_akun' => 'Piutang Pinjaman Anggota', 'tipe_akun' => 'aset'],
-            ['kode_akun' => '1-2000', 'nama_akun' => 'Akumulasi Penyusutan Aset', 'tipe_akun' => 'aset'],
-            
-            // KEWAJIBAN
-            ['kode_akun' => '2-1000', 'nama_akun' => 'Hutang Usaha', 'tipe_akun' => 'kewajiban'],
-            ['kode_akun' => '2-2000', 'nama_akun' => 'Hutang Bank', 'tipe_akun' => 'kewajiban'],
-            
-            // EKUITAS
-            ['kode_akun' => '3-1000', 'nama_akun' => 'Modal', 'tipe_akun' => 'ekuitas'],
-            ['kode_akun' => '3-2000', 'nama_akun' => 'Laba Ditahan', 'tipe_akun' => 'ekuitas'],
-            
-            // PENDAPATAN
-            ['kode_akun' => '4-1000', 'nama_akun' => 'Pendapatan Simpanan', 'tipe_akun' => 'pendapatan'],
-            ['kode_akun' => '4-2000', 'nama_akun' => 'Pendapatan Jasa Pinjaman', 'tipe_akun' => 'pendapatan'],
-            
-            // BEBAN
-            ['kode_akun' => '5-1000', 'nama_akun' => 'Beban Operasional', 'tipe_akun' => 'beban'],
-            ['kode_akun' => '5-2000', 'nama_akun' => 'Beban Gaji', 'tipe_akun' => 'beban'],
-            ['kode_akun' => '5-3000', 'nama_akun' => 'Beban Administrasi', 'tipe_akun' => 'beban'],
-            ['kode_akun' => '5-4000', 'nama_akun' => 'Beban Penyusutan', 'tipe_akun' => 'beban'],
-        ];
-
-        foreach ($chartOfAccounts as $akun) {
-            Akun::firstOrCreate(
-                [
-                    'desa_id' => $this->desa->id,
-                    'kode_akun' => $akun['kode_akun'],
-                ],
-                [
-                    'nama_akun' => $akun['nama_akun'],
-                    'tipe_akun' => $akun['tipe_akun'],
-                    'status' => 'aktif',
-                    'created_by' => $this->user->id,
-                ]
-            );
-        }
-
-        $this->command->info('✓ Akun (COA) berhasil dibuat');
+        $this->call(GlobalCoaSeeder::class);
     }
 
     /**
@@ -270,17 +228,9 @@ class TestingDataSeeder extends Seeder
      */
     protected function createTransaksiKasDesember2025(): void
     {
-        $akunKas = Akun::where('desa_id', $this->desa->id)
-            ->where('nama_akun', 'Kas')
-            ->first();
-
-        $akunPendapatan = Akun::where('desa_id', $this->desa->id)
-            ->where('tipe_akun', 'pendapatan')
-            ->first();
-
-        $akunBeban = Akun::where('desa_id', $this->desa->id)
-            ->where('tipe_akun', 'beban')
-            ->first();
+        $akunKas = Akun::aktif()->where('nama_akun', 'Kas')->first();
+        $akunPendapatan = Akun::aktif()->where('tipe_akun', 'pendapatan')->first();
+        $akunBeban = Akun::aktif()->where('tipe_akun', 'beban')->first();
 
         if (!$akunKas || !$akunPendapatan || !$akunBeban) {
             $this->command->warn('⚠ Akun tidak lengkap, skip transaksi kas Desember 2025');
@@ -324,17 +274,9 @@ class TestingDataSeeder extends Seeder
      */
     protected function createTransaksiKasJanuari2026(): void
     {
-        $akunKas = Akun::where('desa_id', $this->desa->id)
-            ->where('nama_akun', 'Kas')
-            ->first();
-
-        $akunPendapatan = Akun::where('desa_id', $this->desa->id)
-            ->where('tipe_akun', 'pendapatan')
-            ->first();
-
-        $akunBeban = Akun::where('desa_id', $this->desa->id)
-            ->where('tipe_akun', 'beban')
-            ->first();
+        $akunKas = Akun::aktif()->where('nama_akun', 'Kas')->first();
+        $akunPendapatan = Akun::aktif()->where('tipe_akun', 'pendapatan')->first();
+        $akunBeban = Akun::aktif()->where('tipe_akun', 'beban')->first();
 
         if (!$akunKas || !$akunPendapatan || !$akunBeban) {
             $this->command->warn('⚠ Akun tidak lengkap, skip transaksi kas Januari 2026');
@@ -378,12 +320,11 @@ class TestingDataSeeder extends Seeder
      */
     protected function createJurnalMemorialDesember2025(): void
     {
-        $akunAset = Akun::where('desa_id', $this->desa->id)
+        $akunAset = Akun::aktif()
             ->where('tipe_akun', 'aset')
-            ->where('nama_akun', 'Penyusutan Aset')
+            ->where('nama_akun', 'like', '%Akumulasi%Penyusutan%')
             ->first();
-
-        $akunBebanPenyusutan = Akun::where('desa_id', $this->desa->id)
+        $akunBebanPenyusutan = Akun::aktif()
             ->where('tipe_akun', 'beban')
             ->where('nama_akun', 'like', '%Penyusutan%')
             ->first();
@@ -425,12 +366,11 @@ class TestingDataSeeder extends Seeder
      */
     protected function createJurnalMemorialJanuari2026(): void
     {
-        $akunAset = Akun::where('desa_id', $this->desa->id)
+        $akunAset = Akun::aktif()
             ->where('tipe_akun', 'aset')
-            ->where('nama_akun', 'Penyusutan Aset')
+            ->where('nama_akun', 'like', '%Akumulasi%Penyusutan%')
             ->first();
-
-        $akunBebanPenyusutan = Akun::where('desa_id', $this->desa->id)
+        $akunBebanPenyusutan = Akun::aktif()
             ->where('tipe_akun', 'beban')
             ->where('nama_akun', 'like', '%Penyusutan%')
             ->first();

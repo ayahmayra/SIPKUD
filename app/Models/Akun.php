@@ -2,33 +2,24 @@
 
 namespace App\Models;
 
-use App\Models\Concerns\HasDesaScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Model Akun
- * 
- * Master data untuk Chart of Accounts (COA)
- * Digunakan sebagai struktur dasar akuntansi
- * Akan digunakan oleh modul Jurnal dan Pelaporan di fase selanjutnya
- * 
- * Catatan: Modul-modul berikut akan dikembangkan di fase selanjutnya:
- * - Pinjaman
- * - Kas
- * - Jurnal (Akuntansi)
- * - Aset
- * - Pelaporan
+ *
+ * Master data Chart of Accounts (COA) - GLOBAL untuk seluruh desa.
+ * Hanya Admin dan Super Admin yang dapat menambah/mengedit.
+ * Admin Desa hanya dapat menggunakan akun yang sudah ada.
  */
 class Akun extends Model
 {
-    use HasDesaScope, SoftDeletes;
+    use SoftDeletes;
 
     protected $table = 'akun';
 
     protected $fillable = [
-        'desa_id',
         'kode_akun',
         'nama_akun',
         'tipe_akun',
@@ -43,14 +34,6 @@ class Akun extends Model
             'tipe_akun' => 'string',
             'status' => 'string',
         ];
-    }
-
-    /**
-     * Relasi ke desa
-     */
-    public function desa(): BelongsTo
-    {
-        return $this->belongsTo(Desa::class);
     }
 
     /**

@@ -20,7 +20,7 @@ class Edit extends Component
 
     public function mount(Akun $akun): void
     {
-        Gate::authorize('admin_desa');
+        Gate::authorize('manage_akun');
         
         $this->akun = $akun;
         $this->kode_akun = $akun->kode_akun;
@@ -32,20 +32,13 @@ class Edit extends Component
     public function update(): void
     {
         $validated = $this->validate([
-            'kode_akun' => [
-                'required', 
-                'string', 
-                'max:50',
-                Rule::unique('akun')->where(function ($query) {
-                    return $query->where('desa_id', Auth::user()->desa_id);
-                })->ignore($this->akun->id),
-            ],
+            'kode_akun' => ['required', 'string', 'max:50', Rule::unique('akun')->ignore($this->akun->id)],
             'nama_akun' => ['required', 'string', 'max:255'],
             'tipe_akun' => ['required', 'in:aset,kewajiban,ekuitas,pendapatan,beban'],
             'status' => ['required', 'in:aktif,nonaktif'],
         ], [
             'kode_akun.required' => 'Kode akun wajib diisi.',
-            'kode_akun.unique' => 'Kode akun sudah digunakan di desa ini.',
+            'kode_akun.unique' => 'Kode akun sudah digunakan.',
             'nama_akun.required' => 'Nama akun wajib diisi.',
             'tipe_akun.required' => 'Tipe akun wajib dipilih.',
             'tipe_akun.in' => 'Tipe akun tidak valid.',

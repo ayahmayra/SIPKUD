@@ -92,6 +92,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('periode/{desa_id}/{periode}', \App\Livewire\Periode\Show::class)->name('periode.show');
     });
 
+    // Master Akun (COA) - hanya Super Admin & Admin Kecamatan
+    Route::middleware(['can:manage_akun'])->group(function () {
+        Route::get('akun/create', \App\Livewire\MasterData\Akun\Create::class)->name('akun.create');
+        Route::get('akun/{akun}/edit', \App\Livewire\MasterData\Akun\Edit::class)->name('akun.edit');
+    });
+
     // Admin Desa Routes - Create & Edit (admin kecamatan tidak bisa)
     Route::middleware(['can:admin_desa'])->group(function () {
         // Kelompok CRUD
@@ -101,10 +107,6 @@ Route::middleware(['auth'])->group(function () {
         // Anggota CRUD
         Route::get('anggota/create', \App\Livewire\MasterData\Anggota\Create::class)->name('anggota.create');
         Route::get('anggota/{anggota}/edit', \App\Livewire\MasterData\Anggota\Edit::class)->name('anggota.edit');
-        
-        // Akun CRUD
-        Route::get('akun/create', \App\Livewire\MasterData\Akun\Create::class)->name('akun.create');
-        Route::get('akun/{akun}/edit', \App\Livewire\MasterData\Akun\Edit::class)->name('akun.edit');
         
         // Unit Usaha CRUD
         Route::get('unit-usaha/create', \App\Livewire\MasterData\UnitUsaha\Create::class)->name('unit-usaha.create');

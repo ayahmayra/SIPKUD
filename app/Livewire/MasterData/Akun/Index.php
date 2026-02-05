@@ -48,8 +48,7 @@ class Index extends Component
 
     public function delete(int $akunId): void
     {
-        // Hanya Admin Desa yang bisa menghapus akun
-        Gate::authorize('admin_desa');
+        Gate::authorize('manage_akun');
         
         $akun = Akun::findOrFail($akunId);
         

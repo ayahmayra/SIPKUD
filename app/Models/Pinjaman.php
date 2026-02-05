@@ -82,11 +82,11 @@ class Pinjaman extends Model
             $pinjaman->load('anggota');
             
             // Get akun
-            $akunKas = \App\Models\Akun::where('desa_id', $pinjaman->desa_id)
+            $akunKas = \App\Models\Akun::aktif()
                 ->where('nama_akun', 'Kas')
                 ->first();
             
-            $akunPiutang = \App\Models\Akun::where('desa_id', $pinjaman->desa_id)
+            $akunPiutang = \App\Models\Akun::aktif()
                 ->where('nama_akun', 'Piutang Pinjaman Anggota')
                 ->first();
             

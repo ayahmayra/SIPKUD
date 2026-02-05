@@ -19,26 +19,19 @@ class Create extends Component
 
     public function mount(): void
     {
-        Gate::authorize('admin_desa');
+        Gate::authorize('manage_akun');
     }
 
     public function save(): void
     {
         $validated = $this->validate([
-            'kode_akun' => [
-                'required', 
-                'string', 
-                'max:50',
-                Rule::unique('akun')->where(function ($query) {
-                    return $query->where('desa_id', Auth::user()->desa_id);
-                }),
-            ],
+            'kode_akun' => ['required', 'string', 'max:50', Rule::unique('akun')],
             'nama_akun' => ['required', 'string', 'max:255'],
             'tipe_akun' => ['required', 'in:aset,kewajiban,ekuitas,pendapatan,beban'],
             'status' => ['required', 'in:aktif,nonaktif'],
         ], [
             'kode_akun.required' => 'Kode akun wajib diisi.',
-            'kode_akun.unique' => 'Kode akun sudah digunakan di desa ini.',
+            'kode_akun.unique' => 'Kode akun sudah digunakan.',
             'nama_akun.required' => 'Nama akun wajib diisi.',
             'tipe_akun.required' => 'Tipe akun wajib dipilih.',
             'tipe_akun.in' => 'Tipe akun tidak valid.',
@@ -46,7 +39,6 @@ class Create extends Component
             'status.in' => 'Status tidak valid.',
         ]);
 
-        $validated['desa_id'] = Auth::user()->desa_id;
         $validated['created_by'] = Auth::id();
         $validated['updated_by'] = Auth::id();
 

@@ -137,20 +137,18 @@ class Create extends Component
                                    ->get();
         
         // Akun kas/bank
-        $akunKasList = Akun::where('desa_id', $user->desa_id)
+        $akunKasList = Akun::aktif()
                            ->where('tipe_akun', 'aset')
                            ->where(function($q) {
                                $q->where('kode_akun', 'like', '1-10%') // Kas dan Bank
                                  ->orWhere('nama_akun', 'like', '%kas%')
                                  ->orWhere('nama_akun', 'like', '%bank%');
                            })
-                           ->aktif()
                            ->orderBy('kode_akun')
                            ->get();
         
         // Akun lawan (semua akun kecuali kas/bank)
-        $akunLawanList = Akun::where('desa_id', $user->desa_id)
-                             ->aktif()
+        $akunLawanList = Akun::aktif()
                              ->orderBy('kode_akun')
                              ->get()
                              ->groupBy('tipe_akun');

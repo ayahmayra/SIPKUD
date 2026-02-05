@@ -144,7 +144,7 @@ class Edit extends Component
                                    ->orderBy('nama_unit')
                                    ->get();
         
-        $akunList = Akun::where('desa_id', $user->desa_id)
+        $akunList = Akun::aktif()
                         ->aktif()
                         ->orderBy('kode_akun')
                         ->get();

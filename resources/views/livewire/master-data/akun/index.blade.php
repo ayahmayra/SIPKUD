@@ -50,7 +50,7 @@
     <div>
         <flux:heading size="xl">Master Akun</flux:heading>
         <flux:heading size="sm" class="mt-2 text-zinc-600 dark:text-zinc-400">
-            Kelola Chart of Accounts (COA) untuk struktur akuntansi
+            Chart of Accounts (COA) global untuk seluruh desa. Hanya Admin dan Super Admin yang dapat menambah/mengedit.
         </flux:heading>
     </div>
 
@@ -76,7 +76,7 @@
                     <option value="nonaktif">Nonaktif</option>
                 </flux:select>
             </div>
-            @if(auth()->user()->isAdminDesa())
+            @if(auth()->user()->isAdminKecamatan() || auth()->user()->isSuperAdmin())
                 <flux:button 
                     wire:navigate 
                     href="{{ route('akun.create') }}" 
@@ -118,7 +118,7 @@
                                 </flux:badge>
                             </td>
                             <td class="px-4 py-3 text-right">
-                                @if(auth()->user()->isAdminDesa())
+                                @if(auth()->user()->isAdminKecamatan() || auth()->user()->isSuperAdmin())
                                     <div class="flex items-center justify-end gap-2">
                                         <flux:button 
                                             wire:navigate

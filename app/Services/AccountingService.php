@@ -145,6 +145,52 @@ class AccountingService
     }
 
     /**
+     * Update jurnal saldo awal (khusus).
+     * Mengizinkan update jurnal posted dan mengabaikan periode closed,
+     * lalu recalculate neraca_saldo untuk periode tersebut.
+     *
+     * @param Jurnal $jurnal
+     * @param array $data
+     * @return Jurnal
+     */
+    public function updateJurnalForSaldoAwal(Jurnal $jurnal, array $data): Jurnal
+    {
+        $this->validateJurnalData($data);
+        $this->validateBalance($data['details']);
+
+        $periode = Carbon::parse($data['tanggal_transaksi'])->format('Y-m');
+
+        return DB::transaction(function () use ($jurnal, $data, $periode) {
+            $jurnal->details()->delete();
+            $totals = $this->calculateTotals($data['details']);
+
+            $jurnal->update([
+                'unit_usaha_id' => $data['unit_usaha_id'] ?? $jurnal->unit_usaha_id,
+                'tanggal_transaksi' => $data['tanggal_transaksi'],
+                'jenis_jurnal' => $data['jenis_jurnal'],
+                'keterangan' => $data['keterangan'],
+                'total_debit' => $totals['debit'],
+                'total_kredit' => $totals['kredit'],
+                'updated_by' => Auth::id(),
+            ]);
+
+            foreach ($data['details'] as $detail) {
+                JurnalDetail::create([
+                    'jurnal_id' => $jurnal->id,
+                    'akun_id' => $detail['akun_id'],
+                    'posisi' => $detail['posisi'],
+                    'jumlah' => $detail['jumlah'],
+                    'keterangan' => $detail['keterangan'] ?? null,
+                ]);
+            }
+
+            $this->recalculateBalance($jurnal->desa_id, $periode, $jurnal->unit_usaha_id);
+
+            return $jurnal->fresh(['details.akun']);
+        });
+    }
+
+    /**
      * Void jurnal (pembatalan)
      * 
      * @param Jurnal $jurnal
@@ -221,7 +267,6 @@ class AccountingService
                          ->where('neraca_saldo.periode', '=', $periode)
                          ->where('neraca_saldo.unit_usaha_id', '=', $unitUsahaId);
                 })
-                ->where('akun.desa_id', $desaId)
                 ->where('akun.status', 'aktif')
                 ->whereNull('akun.deleted_at')
                 ->select(
@@ -247,7 +292,6 @@ class AccountingService
                          ->where('neraca_saldo.desa_id', '=', $desaId)
                          ->where('neraca_saldo.periode', '=', $periode);
                 })
-                ->where('akun.desa_id', $desaId)
                 ->where('akun.status', 'aktif')
                 ->whereNull('akun.deleted_at')
                 ->select(
@@ -382,7 +426,6 @@ class AccountingService
                          ->where('neraca_saldo.periode', '=', $periode)
                          ->where('neraca_saldo.unit_usaha_id', '=', $unitUsahaId);
                 })
-                ->where('akun.desa_id', $desaId)
                 ->where('akun.status', 'aktif')
                 ->whereIn('akun.tipe_akun', ['pendapatan', 'beban'])
                 ->whereNull('akun.deleted_at')
@@ -407,7 +450,6 @@ class AccountingService
                          ->where('neraca_saldo.desa_id', '=', $desaId)
                          ->where('neraca_saldo.periode', '=', $periode);
                 })
-                ->where('akun.desa_id', $desaId)
                 ->where('akun.status', 'aktif')
                 ->whereIn('akun.tipe_akun', ['pendapatan', 'beban'])
                 ->whereNull('akun.deleted_at')
@@ -544,7 +586,6 @@ class AccountingService
                          ->where('neraca_saldo.periode', '=', $periode)
                          ->where('neraca_saldo.unit_usaha_id', '=', $unitUsahaId);
                 })
-                ->where('akun.desa_id', $desaId)
                 ->where('akun.status', 'aktif')
                 ->whereIn('akun.tipe_akun', ['aset', 'kewajiban', 'ekuitas'])
                 ->whereNull('akun.deleted_at')
@@ -567,7 +608,6 @@ class AccountingService
                          ->where('neraca_saldo.desa_id', '=', $desaId)
                          ->where('neraca_saldo.periode', '=', $periode);
                 })
-                ->where('akun.desa_id', $desaId)
                 ->where('akun.status', 'aktif')
                 ->whereIn('akun.tipe_akun', ['aset', 'kewajiban', 'ekuitas'])
                 ->whereNull('akun.deleted_at')
@@ -668,7 +708,6 @@ class AccountingService
                     $join->whereNull('neraca_saldo.unit_usaha_id');
                 }
             })
-            ->where('akun.desa_id', $desaId)
             ->where('akun.status', 'aktif')
             ->where('akun.tipe_akun', 'ekuitas')
             ->whereNull('akun.deleted_at')
@@ -700,7 +739,6 @@ class AccountingService
                     $join->whereNull('neraca_saldo.unit_usaha_id');
                 }
             })
-            ->where('akun.desa_id', $desaId)
             ->where('akun.status', 'aktif')
             ->where(function ($q) {
                 $q->where('akun.nama_akun', 'like', '%prive%')
