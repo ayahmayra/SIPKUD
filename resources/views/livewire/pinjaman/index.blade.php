@@ -128,6 +128,7 @@
                         <th class="px-2 py-2 text-left text-xs font-semibold w-12">No</th>
                         <th class="px-2 py-2 text-left text-xs font-semibold min-w-[150px]">Nomor Pinjaman</th>
                         <th class="px-2 py-2 text-left text-xs font-semibold min-w-[150px]">Anggota</th>
+                        <th class="px-2 py-2 text-left text-xs font-semibold min-w-[100px]">Sektor Usaha</th>
                         @if(auth()->user()->isSuperAdmin())
                             <th class="px-2 py-2 text-left text-xs font-semibold min-w-[120px]">Kecamatan</th>
                             <th class="px-2 py-2 text-left text-xs font-semibold min-w-[120px]">Desa</th>
@@ -149,6 +150,9 @@
                             </td>
                             <td class="px-2 py-2">
                                 <div class="font-medium text-sm">{{ $item->anggota->nama }}</div>
+                            </td>
+                            <td class="px-2 py-2 text-xs">
+                                {{ $item->sektorUsaha?->nama ?? '-' }}
                             </td>
                             @if(auth()->user()->isSuperAdmin())
                                 <td class="px-2 py-2 text-xs">
@@ -208,7 +212,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ auth()->user()->isSuperAdmin() ? '11' : '9' }}" class="px-2 py-8 text-center text-xs text-zinc-600 dark:text-zinc-400">
+                            <td colspan="{{ auth()->user()->isSuperAdmin() ? '12' : '10' }}" class="px-2 py-8 text-center text-xs text-zinc-600 dark:text-zinc-400">
                                 Tidak ada data pinjaman ditemukan.
                             </td>
                         </tr>

@@ -27,6 +27,7 @@ class Pinjaman extends Model
     protected $fillable = [
         'desa_id',
         'anggota_id',
+        'sektor_usaha_id',
         'nomor_pinjaman',
         'tanggal_pinjaman',
         'jumlah_pinjaman',
@@ -60,6 +61,14 @@ class Pinjaman extends Model
     public function anggota(): BelongsTo
     {
         return $this->belongsTo(Anggota::class);
+    }
+
+    /**
+     * Relasi ke sektor usaha
+     */
+    public function sektorUsaha(): BelongsTo
+    {
+        return $this->belongsTo(SektorUsaha::class);
     }
 
     /**

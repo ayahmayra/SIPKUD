@@ -70,6 +70,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('anggota', \App\Livewire\MasterData\Anggota\Index::class)->name('anggota.index');
         Route::get('akun', \App\Livewire\MasterData\Akun\Index::class)->name('akun.index');
         Route::get('unit-usaha', \App\Livewire\MasterData\UnitUsaha\Index::class)->name('unit-usaha.index');
+        Route::get('sektor-usaha', \App\Livewire\MasterData\SektorUsaha\Index::class)->name('sektor-usaha.index');
         Route::get('pinjaman', \App\Livewire\Pinjaman\Index::class)->name('pinjaman.index');
         Route::get('angsuran', \App\Livewire\Angsuran\Index::class)->name('angsuran.index');
         

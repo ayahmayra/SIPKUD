@@ -10,17 +10,26 @@ class DatabaseSeeder extends Seeder
     /**
      * Seed the application's database.
      *
-     * Jalankan dengan: php artisan migrate:fresh --seed
-     * Urutan: master → user → COA → unit usaha → data Kelapapati (testing + faker) → pinjaman/angsuran → pengumuman.
+     * Jalankan: php artisan migrate:fresh --seed
+     * Atau:     php artisan db:seed
+     *
+     * Urutan (data user selalu dijalankan):
+     * 1. Kecamatan → Desa → User (wajib, termasuk Super Admin & Admin Desa)
+     * 2. GlobalCoa → UnitUsaha → SektorUsaha (master)
+     * 3. TestingData (Kelapapati: user admin, kelompok, anggota, transaksi, jurnal)
+     * 4. KelapapatiFaker (dummy faker: anggota, transaksi kas, pinjaman+sektor)
+     * 5. PinjamanAngsuran (pinjaman & angsuran Kelapapati)
+     * 6. Pengumuman
      */
     public function run(): void
     {
         $this->call([
             KecamatanSeeder::class,
             DesaSeeder::class,
-            UserSeeder::class,
+            UserSeeder::class,           // Data user (Super Admin, Admin Kecamatan, Admin Desa, dll)
             GlobalCoaSeeder::class,
             UnitUsahaSeeder::class,
+            SektorUsahaSeeder::class,   // Sektor usaha untuk pinjaman (struktur baru)
             TestingDataSeeder::class,
             KelapapatiFakerSeeder::class,
             PinjamanAngsuranSeeder::class,

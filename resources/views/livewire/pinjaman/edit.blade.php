@@ -73,6 +73,27 @@
             </flux:select>
             <flux:error name="anggota_id" />
 
+            <div>
+                <flux:select wire:model="sektor_usaha_id" label="Sektor Usaha">
+                    <option value="">— Pilih Sektor Usaha (opsional) —</option>
+                    @foreach($sektorUsaha as $s)
+                        <option value="{{ $s->id }}">{{ $s->nama }}</option>
+                    @endforeach
+                </flux:select>
+                <flux:error name="sektor_usaha_id" />
+                @if(!$show_new_sektor)
+                    <flux:button type="button" wire:click="$set('show_new_sektor', true)" variant="ghost" size="sm" class="mt-1">
+                        + Tambah sektor usaha baru
+                    </flux:button>
+                @else
+                    <div class="mt-2 flex flex-wrap items-end gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800/50">
+                        <flux:input wire:model="new_sektor_nama" placeholder="Nama sektor (mis. Pertanian)" class="min-w-[200px]" />
+                        <flux:button type="button" wire:click="addSektorUsaha" variant="primary" size="sm">Tambah</flux:button>
+                        <flux:button type="button" wire:click="$set('show_new_sektor', false); $set('new_sektor_nama', '')" variant="ghost" size="sm">Batal</flux:button>
+                    </div>
+                @endif
+            </div>
+
             <flux:input 
                 wire:model="tanggal_pinjaman" 
                 type="date"

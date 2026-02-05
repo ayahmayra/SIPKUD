@@ -86,6 +86,12 @@
                     ->orderBy('created_at', 'desc')
                     ->limit(5)
                     ->get();
+                // Statistik peminjaman (data statistik + per jenis usaha)
+                $pinjamanQuerySA = \App\Models\Pinjaman::query();
+                $dashboardPinjaman = app(\App\Services\DashboardPinjamanService::class);
+                $statsSA = $dashboardPinjaman->getStatistik($pinjamanQuerySA);
+                $sektorListSA = $dashboardPinjaman->getStatistikPerSektor($pinjamanQuerySA);
+                $sektorTotalSA = $dashboardPinjaman->getTotalUntukSektor($pinjamanQuerySA);
             @endphp
 
             <!-- Pengumuman -->
@@ -122,6 +128,15 @@
                     @endforeach
                 </div>
             @endif
+
+            {{-- Data Statistik & Peminjaman per Jenis Usaha --}}
+            <div class="space-y-6">
+                @include('partials.dashboard-statistik-pinjaman', [
+                    'stats' => $statsSA,
+                    'sektorList' => $sektorListSA,
+                    'sektorTotal' => $sektorTotalSA,
+                ])
+            </div>
 
             <!-- Data Pinjaman -->
             <div class="grid gap-6 md:grid-cols-2">
@@ -289,12 +304,11 @@
             @php
                 // Data untuk Admin Kecamatan
                 $kecamatanId = auth()->user()->kecamatan_id;
-                $totalPinjamanDisalurkan = \App\Models\Pinjaman::whereHas('desa', function($q) use ($kecamatanId) {
+                $pinjamanQueryKec = \App\Models\Pinjaman::whereHas('desa', function($q) use ($kecamatanId) {
                     $q->where('kecamatan_id', $kecamatanId);
-                })->sum('jumlah_pinjaman');
-                $pinjamanAktif = \App\Models\Pinjaman::whereHas('desa', function($q) use ($kecamatanId) {
-                    $q->where('kecamatan_id', $kecamatanId);
-                })->where('status_pinjaman', 'aktif')->count();
+                });
+                $totalPinjamanDisalurkan = (clone $pinjamanQueryKec)->sum('jumlah_pinjaman');
+                $pinjamanAktif = (clone $pinjamanQueryKec)->where('status_pinjaman', 'aktif')->count();
                 $anggotaTerbaru = \App\Models\Anggota::with(['desa', 'kelompok'])
                     ->whereHas('desa', function($q) use ($kecamatanId) {
                         $q->where('kecamatan_id', $kecamatanId);
@@ -316,6 +330,10 @@
                     ->orderBy('created_at', 'desc')
                     ->limit(5)
                     ->get();
+                $dashboardPinjamanKec = app(\App\Services\DashboardPinjamanService::class);
+                $statsKec = $dashboardPinjamanKec->getStatistik($pinjamanQueryKec);
+                $sektorListKec = $dashboardPinjamanKec->getStatistikPerSektor($pinjamanQueryKec);
+                $sektorTotalKec = $dashboardPinjamanKec->getTotalUntukSektor($pinjamanQueryKec);
             @endphp
 
             <!-- Pengumuman -->
@@ -352,6 +370,15 @@
                     @endforeach
                 </div>
             @endif
+
+            {{-- Data Statistik & Peminjaman per Jenis Usaha --}}
+            <div class="space-y-6">
+                @include('partials.dashboard-statistik-pinjaman', [
+                    'stats' => $statsKec,
+                    'sektorList' => $sektorListKec,
+                    'sektorTotal' => $sektorTotalKec,
+                ])
+            </div>
 
             <!-- Data Pinjaman -->
             <div class="grid gap-6 md:grid-cols-2">
@@ -523,8 +550,9 @@
             @php
                 // Data untuk Admin Desa
                 $desaId = auth()->user()->desa_id;
-                $totalPinjamanDisalurkan = \App\Models\Pinjaman::where('desa_id', $desaId)->sum('jumlah_pinjaman');
-                $pinjamanAktif = \App\Models\Pinjaman::where('desa_id', $desaId)->where('status_pinjaman', 'aktif')->count();
+                $pinjamanQueryDesa = \App\Models\Pinjaman::where('desa_id', $desaId);
+                $totalPinjamanDisalurkan = (clone $pinjamanQueryDesa)->sum('jumlah_pinjaman');
+                $pinjamanAktif = (clone $pinjamanQueryDesa)->where('status_pinjaman', 'aktif')->count();
                 $anggotaTerbaru = \App\Models\Anggota::with(['kelompok'])
                     ->where('desa_id', $desaId)
                     ->orderBy('created_at', 'desc')
@@ -542,6 +570,10 @@
                     ->orderBy('created_at', 'desc')
                     ->limit(5)
                     ->get();
+                $dashboardPinjamanDesa = app(\App\Services\DashboardPinjamanService::class);
+                $statsDesa = $dashboardPinjamanDesa->getStatistik($pinjamanQueryDesa);
+                $sektorListDesa = $dashboardPinjamanDesa->getStatistikPerSektor($pinjamanQueryDesa);
+                $sektorTotalDesa = $dashboardPinjamanDesa->getTotalUntukSektor($pinjamanQueryDesa);
             @endphp
 
             <!-- Pengumuman -->
@@ -578,6 +610,15 @@
                     @endforeach
                 </div>
             @endif
+
+            {{-- Data Statistik & Peminjaman per Jenis Usaha --}}
+            <div class="space-y-6">
+                @include('partials.dashboard-statistik-pinjaman', [
+                    'stats' => $statsDesa,
+                    'sektorList' => $sektorListDesa,
+                    'sektorTotal' => $sektorTotalDesa,
+                ])
+            </div>
 
             <!-- Data Pinjaman -->
             <div class="grid gap-6 md:grid-cols-2">

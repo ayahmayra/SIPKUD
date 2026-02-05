@@ -8,6 +8,7 @@ use App\Models\AngsuranPinjaman;
 use App\Models\Desa;
 use App\Models\Kelompok;
 use App\Models\Pinjaman;
+use App\Models\SektorUsaha;
 use App\Models\TransaksiKas;
 use App\Models\UnitUsaha;
 use App\Models\User;
@@ -283,6 +284,8 @@ class KelapapatiFakerSeeder extends Seeder
             return;
         }
 
+        $sektorIds = SektorUsaha::where('desa_id', $this->desa->id)->aktif()->pluck('id')->all();
+
         $bulan = [Carbon::parse('2025-11-01'), Carbon::parse('2025-12-01'), Carbon::parse('2026-01-01')];
         $nomorUrut = 1;
 
@@ -290,19 +293,24 @@ class KelapapatiFakerSeeder extends Seeder
             $tanggal = $this->faker->randomElement($bulan)->copy()->addDays($this->faker->numberBetween(1, 20));
             $nomorPinjaman = 'PNJ/' . $tanggal->format('Y/m') . '/' . str_pad($nomorUrut++, 5, '0', STR_PAD_LEFT);
 
+            $attrs = [
+                'anggota_id' => $anggota->id,
+                'tanggal_pinjaman' => $tanggal,
+                'jumlah_pinjaman' => (int) $this->faker->randomElement([3000000, 4000000, 5000000, 6000000, 8000000]),
+                'jangka_waktu_bulan' => $this->faker->randomElement([4, 6, 8, 10]),
+                'jasa_persen' => $this->faker->randomElement([2.0, 2.5, 3.0]),
+                'status_pinjaman' => 'aktif',
+            ];
+            if (! empty($sektorIds)) {
+                $attrs['sektor_usaha_id'] = $this->faker->randomElement($sektorIds);
+            }
+
             $pinjaman = Pinjaman::firstOrCreate(
                 [
                     'desa_id' => $this->desa->id,
                     'nomor_pinjaman' => $nomorPinjaman,
                 ],
-                [
-                    'anggota_id' => $anggota->id,
-                    'tanggal_pinjaman' => $tanggal,
-                    'jumlah_pinjaman' => (int) $this->faker->randomElement([3000000, 4000000, 5000000, 6000000, 8000000]),
-                    'jangka_waktu_bulan' => $this->faker->randomElement([4, 6, 8, 10]),
-                    'jasa_persen' => $this->faker->randomElement([2.0, 2.5, 3.0]),
-                    'status_pinjaman' => 'aktif',
-                ]
+                $attrs
             );
 
             // Beberapa angsuran untuk pinjaman ini

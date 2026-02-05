@@ -154,7 +154,7 @@ class Index extends Component
 
     protected function getPinjamanQuery()
     {
-        return Pinjaman::with(['anggota', 'desa.kecamatan'])
+        return Pinjaman::with(['anggota', 'sektorUsaha', 'desa.kecamatan'])
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('nomor_pinjaman', 'like', '%' . $this->search . '%')
@@ -182,7 +182,7 @@ class Index extends Component
     {
         $user = Auth::user();
         
-        $query = Pinjaman::with(['anggota', 'desa.kecamatan'])
+        $query = Pinjaman::with(['anggota', 'sektorUsaha', 'desa.kecamatan'])
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('nomor_pinjaman', 'like', '%' . $this->search . '%')

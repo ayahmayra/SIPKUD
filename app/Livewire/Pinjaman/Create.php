@@ -4,6 +4,7 @@ namespace App\Livewire\Pinjaman;
 
 use App\Models\Anggota;
 use App\Models\Pinjaman;
+use App\Models\SektorUsaha;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
@@ -13,11 +14,16 @@ use Livewire\Component;
 class Create extends Component
 {
     public ?int $anggota_id = null;
+    public ?int $sektor_usaha_id = null;
     public string $tanggal_pinjaman = '';
     public string $jumlah_pinjaman = '';
     public string $jangka_waktu_bulan = '';
     public string $jasa_persen = '';
     public string $status_pinjaman = 'aktif';
+
+    /** Untuk form "Tambah sektor usaha baru" */
+    public bool $show_new_sektor = false;
+    public string $new_sektor_nama = '';
 
     public function mount(): void
     {
@@ -32,6 +38,7 @@ class Create extends Component
     {
         $validated = $this->validate([
             'anggota_id' => ['required', 'exists:anggota,id'],
+            'sektor_usaha_id' => ['nullable', 'exists:sektor_usaha,id'],
             'tanggal_pinjaman' => ['required', 'date'],
             'jumlah_pinjaman' => ['required', 'numeric', 'min:1'],
             'jangka_waktu_bulan' => ['required', 'integer', 'min:1'],
@@ -84,6 +91,9 @@ class Create extends Component
         // Generate nomor pinjaman otomatis
         $validated['nomor_pinjaman'] = $this->generateNomorPinjaman($user->desa_id);
         $validated['desa_id'] = $user->desa_id;
+        if (empty($validated['sektor_usaha_id'])) {
+            unset($validated['sektor_usaha_id']);
+        }
         $validated['jumlah_pinjaman'] = (float) $validated['jumlah_pinjaman'];
         $validated['jangka_waktu_bulan'] = (int) $validated['jangka_waktu_bulan'];
         $validated['jasa_persen'] = (float) $validated['jasa_persen'];
@@ -121,6 +131,37 @@ class Create extends Component
         return $prefix . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
     }
 
+    /**
+     * Tambah sektor usaha baru dari form (untuk dropdown).
+     */
+    public function addSektorUsaha(): void
+    {
+        $this->validate([
+            'new_sektor_nama' => ['required', 'string', 'max:100'],
+        ], [
+            'new_sektor_nama.required' => 'Nama sektor usaha wajib diisi.',
+            'new_sektor_nama.max' => 'Nama sektor maksimal 100 karakter.',
+        ]);
+
+        $user = Auth::user();
+        if (! $user || ! $user->desa_id) {
+            return;
+        }
+
+        $sektor = SektorUsaha::firstOrCreate(
+            [
+                'desa_id' => $user->desa_id,
+                'nama' => trim($this->new_sektor_nama),
+            ],
+            ['status' => 'aktif']
+        );
+
+        $this->sektor_usaha_id = $sektor->id;
+        $this->new_sektor_nama = '';
+        $this->show_new_sektor = false;
+        $this->dispatch('success', message: 'Sektor usaha ditambahkan.');
+    }
+
     public function render()
     {
         $user = Auth::user();
@@ -132,8 +173,14 @@ class Create extends Component
         }
         $anggota = $anggotaQuery->orderBy('nama')->get();
 
+        $sektorUsaha = collect();
+        if ($user && $user->desa_id) {
+            $sektorUsaha = SektorUsaha::where('desa_id', $user->desa_id)->aktif()->orderBy('nama')->get();
+        }
+
         return view('livewire.pinjaman.create', [
             'anggota' => $anggota,
+            'sektorUsaha' => $sektorUsaha,
         ]);
     }
 }

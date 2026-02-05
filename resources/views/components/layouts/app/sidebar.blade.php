@@ -27,6 +27,7 @@
                         <flux:navlist.item icon="user" :href="route('anggota.index')" :current="request()->routeIs('anggota.*')" wire:navigate>{{ __('Anggota') }}</flux:navlist.item>
                         <flux:navlist.item icon="chart-pie" :href="route('akun.index')" :current="request()->routeIs('akun.*')" wire:navigate>{{ __('Akun (COA)') }}</flux:navlist.item>
                         <flux:navlist.item icon="briefcase" :href="route('unit-usaha.index')" :current="request()->routeIs('unit-usaha.*')" wire:navigate>{{ __('Unit Usaha') }}</flux:navlist.item>
+                        <flux:navlist.item icon="building-storefront" :href="route('sektor-usaha.index')" :current="request()->routeIs('sektor-usaha.*')" wire:navigate>{{ __('Sektor Usaha') }}</flux:navlist.item>
                     </flux:navlist.group>
                 </flux:navlist>
 
@@ -75,6 +76,7 @@
                         <flux:navlist.item icon="user" :href="route('anggota.index')" :current="request()->routeIs('anggota.*')" wire:navigate>{{ __('Anggota') }}</flux:navlist.item>
                         <flux:navlist.item icon="chart-pie" :href="route('akun.index')" :current="request()->routeIs('akun.*')" wire:navigate>{{ __('Akun (COA)') }}</flux:navlist.item>
                         <flux:navlist.item icon="briefcase" :href="route('unit-usaha.index')" :current="request()->routeIs('unit-usaha.*')" wire:navigate>{{ __('Unit Usaha') }}</flux:navlist.item>
+                        <flux:navlist.item icon="building-storefront" :href="route('sektor-usaha.index')" :current="request()->routeIs('sektor-usaha.*')" wire:navigate>{{ __('Sektor Usaha') }}</flux:navlist.item>
                     </flux:navlist.group>
                 </flux:navlist>
 
@@ -123,6 +125,7 @@
                         <flux:navlist.item icon="user" :href="route('anggota.index')" :current="request()->routeIs('anggota.*')" wire:navigate>{{ __('Anggota') }}</flux:navlist.item>
                         <flux:navlist.item icon="chart-pie" :href="route('akun.index')" :current="request()->routeIs('akun.*')" wire:navigate>{{ __('Akun (COA)') }}</flux:navlist.item>
                         <flux:navlist.item icon="briefcase" :href="route('unit-usaha.index')" :current="request()->routeIs('unit-usaha.*')" wire:navigate>{{ __('Unit Usaha') }}</flux:navlist.item>
+                        <flux:navlist.item icon="building-storefront" :href="route('sektor-usaha.index')" :current="request()->routeIs('sektor-usaha.*')" wire:navigate>{{ __('Sektor Usaha') }}</flux:navlist.item>
                     </flux:navlist.group>
                 </flux:navlist>
 

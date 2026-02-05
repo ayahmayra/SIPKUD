@@ -6,6 +6,7 @@ use App\Models\Anggota;
 use App\Models\AngsuranPinjaman;
 use App\Models\Desa;
 use App\Models\Pinjaman;
+use App\Models\SektorUsaha;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -49,11 +50,14 @@ class PinjamanAngsuranSeeder extends Seeder
                 return;
             }
 
+            // Sektor usaha (opsional): ambil satu untuk desa ini
+            $sektorUsahaId = SektorUsaha::where('desa_id', $this->desa->id)->aktif()->inRandomOrder()->value('id');
+
             // 1. Create Pinjaman untuk Desember 2025
-            $this->createPinjamanDesember2025($anggota);
+            $this->createPinjamanDesember2025($anggota, $sektorUsahaId);
 
             // 2. Create Pinjaman untuk Januari 2026
-            $this->createPinjamanJanuari2026($anggota);
+            $this->createPinjamanJanuari2026($anggota, $sektorUsahaId);
 
             // 3. Create Angsuran untuk pinjaman yang sudah ada
             $this->createAngsuran();
@@ -64,8 +68,10 @@ class PinjamanAngsuranSeeder extends Seeder
 
     /**
      * Create Pinjaman untuk Desember 2025
+     * @param \Illuminate\Support\Collection $anggota
+     * @param int|null $sektorUsahaId
      */
-    protected function createPinjamanDesember2025($anggota): void
+    protected function createPinjamanDesember2025($anggota, ?int $sektorUsahaId = null): void
     {
         $pinjamanData = [
             [
@@ -94,19 +100,23 @@ class PinjamanAngsuranSeeder extends Seeder
         foreach ($pinjamanData as $index => $data) {
             $nomorPinjaman = 'PNJ/' . Carbon::parse($data['tanggal'])->format('Y/m') . '/' . str_pad($index + 1, 5, '0', STR_PAD_LEFT);
 
+            $attrs = [
+                'anggota_id' => $data['anggota']->id,
+                'tanggal_pinjaman' => $data['tanggal'],
+                'jumlah_pinjaman' => $data['jumlah'],
+                'jangka_waktu_bulan' => $data['jangka_waktu'],
+                'jasa_persen' => $data['jasa_persen'],
+                'status_pinjaman' => 'aktif',
+            ];
+            if ($sektorUsahaId !== null) {
+                $attrs['sektor_usaha_id'] = $sektorUsahaId;
+            }
             Pinjaman::firstOrCreate(
                 [
                     'desa_id' => $this->desa->id,
                     'nomor_pinjaman' => $nomorPinjaman,
                 ],
-                [
-                    'anggota_id' => $data['anggota']->id,
-                    'tanggal_pinjaman' => $data['tanggal'],
-                    'jumlah_pinjaman' => $data['jumlah'],
-                    'jangka_waktu_bulan' => $data['jangka_waktu'],
-                    'jasa_persen' => $data['jasa_persen'],
-                    'status_pinjaman' => 'aktif',
-                ]
+                $attrs
             );
         }
 
@@ -115,8 +125,10 @@ class PinjamanAngsuranSeeder extends Seeder
 
     /**
      * Create Pinjaman untuk Januari 2026
+     * @param \Illuminate\Support\Collection $anggota
+     * @param int|null $sektorUsahaId
      */
-    protected function createPinjamanJanuari2026($anggota): void
+    protected function createPinjamanJanuari2026($anggota, ?int $sektorUsahaId = null): void
     {
         $pinjamanData = [
             [
@@ -138,19 +150,23 @@ class PinjamanAngsuranSeeder extends Seeder
         foreach ($pinjamanData as $index => $data) {
             $nomorPinjaman = 'PNJ/' . Carbon::parse($data['tanggal'])->format('Y/m') . '/' . str_pad($index + 1, 5, '0', STR_PAD_LEFT);
 
+            $attrs = [
+                'anggota_id' => $data['anggota']->id,
+                'tanggal_pinjaman' => $data['tanggal'],
+                'jumlah_pinjaman' => $data['jumlah'],
+                'jangka_waktu_bulan' => $data['jangka_waktu'],
+                'jasa_persen' => $data['jasa_persen'],
+                'status_pinjaman' => 'aktif',
+            ];
+            if ($sektorUsahaId !== null) {
+                $attrs['sektor_usaha_id'] = $sektorUsahaId;
+            }
             Pinjaman::firstOrCreate(
                 [
                     'desa_id' => $this->desa->id,
                     'nomor_pinjaman' => $nomorPinjaman,
                 ],
-                [
-                    'anggota_id' => $data['anggota']->id,
-                    'tanggal_pinjaman' => $data['tanggal'],
-                    'jumlah_pinjaman' => $data['jumlah'],
-                    'jangka_waktu_bulan' => $data['jangka_waktu'],
-                    'jasa_persen' => $data['jasa_persen'],
-                    'status_pinjaman' => 'aktif',
-                ]
+                $attrs
             );
         }
 
