@@ -93,17 +93,21 @@ class PinjamanAngsuranSeeder extends Seeder
 
         foreach ($pinjamanData as $index => $data) {
             $nomorPinjaman = 'PNJ/' . Carbon::parse($data['tanggal'])->format('Y/m') . '/' . str_pad($index + 1, 5, '0', STR_PAD_LEFT);
-            
-            Pinjaman::create([
-                'desa_id' => $this->desa->id,
-                'anggota_id' => $data['anggota']->id,
-                'nomor_pinjaman' => $nomorPinjaman,
-                'tanggal_pinjaman' => $data['tanggal'],
-                'jumlah_pinjaman' => $data['jumlah'],
-                'jangka_waktu_bulan' => $data['jangka_waktu'],
-                'jasa_persen' => $data['jasa_persen'],
-                'status_pinjaman' => 'aktif',
-            ]);
+
+            Pinjaman::firstOrCreate(
+                [
+                    'desa_id' => $this->desa->id,
+                    'nomor_pinjaman' => $nomorPinjaman,
+                ],
+                [
+                    'anggota_id' => $data['anggota']->id,
+                    'tanggal_pinjaman' => $data['tanggal'],
+                    'jumlah_pinjaman' => $data['jumlah'],
+                    'jangka_waktu_bulan' => $data['jangka_waktu'],
+                    'jasa_persen' => $data['jasa_persen'],
+                    'status_pinjaman' => 'aktif',
+                ]
+            );
         }
 
         $this->command->info('✓ Pinjaman Desember 2025 berhasil dibuat (3 pinjaman)');
@@ -133,17 +137,21 @@ class PinjamanAngsuranSeeder extends Seeder
 
         foreach ($pinjamanData as $index => $data) {
             $nomorPinjaman = 'PNJ/' . Carbon::parse($data['tanggal'])->format('Y/m') . '/' . str_pad($index + 1, 5, '0', STR_PAD_LEFT);
-            
-            Pinjaman::create([
-                'desa_id' => $this->desa->id,
-                'anggota_id' => $data['anggota']->id,
-                'nomor_pinjaman' => $nomorPinjaman,
-                'tanggal_pinjaman' => $data['tanggal'],
-                'jumlah_pinjaman' => $data['jumlah'],
-                'jangka_waktu_bulan' => $data['jangka_waktu'],
-                'jasa_persen' => $data['jasa_persen'],
-                'status_pinjaman' => 'aktif',
-            ]);
+
+            Pinjaman::firstOrCreate(
+                [
+                    'desa_id' => $this->desa->id,
+                    'nomor_pinjaman' => $nomorPinjaman,
+                ],
+                [
+                    'anggota_id' => $data['anggota']->id,
+                    'tanggal_pinjaman' => $data['tanggal'],
+                    'jumlah_pinjaman' => $data['jumlah'],
+                    'jangka_waktu_bulan' => $data['jangka_waktu'],
+                    'jasa_persen' => $data['jasa_persen'],
+                    'status_pinjaman' => 'aktif',
+                ]
+            );
         }
 
         $this->command->info('✓ Pinjaman Januari 2026 berhasil dibuat (2 pinjaman)');
@@ -174,10 +182,13 @@ class PinjamanAngsuranSeeder extends Seeder
             
             // Hanya buat angsuran jika tanggal angsuran <= Januari 2026
             if ($tanggalAngsuran->format('Y-m') <= '2026-01') {
-                AngsuranPinjaman::create([
-                    'pinjaman_id' => $p->id,
+                AngsuranPinjaman::firstOrCreate(
+                    [
+                        'pinjaman_id' => $p->id,
+                        'angsuran_ke' => 1,
+                    ],
+                    [
                     'tanggal_bayar' => $tanggalAngsuran->format('Y-m-d'),
-                    'angsuran_ke' => 1,
                     'pokok_dibayar' => $pokokPerBulan,
                     'jasa_dibayar' => $jasaPerBulan,
                     'denda_dibayar' => 0,

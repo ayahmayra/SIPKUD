@@ -3,14 +3,12 @@
 namespace Database\Seeders;
 
 use App\Models\Akun;
-use App\Models\Desa;
 use Illuminate\Database\Seeder;
 
 /**
- * Seeder untuk Chart of Accounts (COA) standar BUM Desa
- * 
- * Struktur akun mengikuti standar akuntansi untuk BUM Desa
- * dengan fokus pada unit simpan pinjam (USP/UED-SP)
+ * Seeder Chart of Accounts (COA) standar BUM Desa - extended.
+ * Akun global (tanpa desa_id), sama untuk seluruh desa.
+ * Untuk COA minimal gunakan GlobalCoaSeeder.
  */
 class AkunSeeder extends Seeder
 {
@@ -272,25 +270,17 @@ class AkunSeeder extends Seeder
             ],
         ];
 
-        // Insert ke semua desa yang ada
-        $allDesa = Desa::all();
-
-        foreach ($allDesa as $desa) {
-            foreach ($chartOfAccounts as $akun) {
-                Akun::firstOrCreate(
-                    [
-                        'desa_id' => $desa->id,
-                        'kode_akun' => $akun['kode_akun'],
-                    ],
-                    [
-                        'nama_akun' => $akun['nama_akun'],
-                        'tipe_akun' => $akun['tipe_akun'],
-                        'status' => 'aktif',
-                    ]
-                );
-            }
+        foreach ($chartOfAccounts as $akun) {
+            Akun::firstOrCreate(
+                ['kode_akun' => $akun['kode_akun']],
+                [
+                    'nama_akun' => $akun['nama_akun'],
+                    'tipe_akun' => $akun['tipe_akun'],
+                    'status' => 'aktif',
+                ]
+            );
         }
 
-        $this->command->info('✓ Chart of Accounts (COA) standar BUM Desa berhasil dibuat untuk semua desa.');
+        $this->command->info('✓ Chart of Accounts (COA) standar BUM Desa berhasil dibuat (global).');
     }
 }

@@ -74,7 +74,10 @@ class PengumumanSeeder extends Seeder
         ];
 
         foreach ($pengumuman as $data) {
-            Pengumuman::create($data);
+            Pengumuman::firstOrCreate(
+                ['judul' => $data['judul']],
+                $data
+            );
         }
 
         $this->command->info('✅ Seeder pengumuman berhasil dijalankan. Total: ' . count($pengumuman) . ' pengumuman.');

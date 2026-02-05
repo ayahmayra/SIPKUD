@@ -15,6 +15,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Jika kolom desa_id sudah tidak ada (migration pernah dijalankan), skip
+        if (! Schema::hasColumn('akun', 'desa_id')) {
+            return;
+        }
+
         // 1. Tangani duplikat kode_akun - pertahankan satu per kode (id terkecil)
         $duplicates = DB::table('akun')
             ->select('kode_akun', DB::raw('MIN(id) as keeper_id'))
@@ -30,8 +35,10 @@ return new class extends Migration
 
             foreach ($duplicateIds as $oldId) {
                 DB::table('jurnal_detail')->where('akun_id', $oldId)->update(['akun_id' => $dup->keeper_id]);
-                DB::table('transaksi_kas')->where('akun_kas_id', $oldId)->update(['akun_kas_id' => $dup->keeper_id]);
-                DB::table('transaksi_kas')->where('akun_lawan_id', $oldId)->update(['akun_lawan_id' => $dup->keeper_id]);
+                if (Schema::hasColumn('transaksi_kas', 'akun_kas_id')) {
+                    DB::table('transaksi_kas')->where('akun_kas_id', $oldId)->update(['akun_kas_id' => $dup->keeper_id]);
+                    DB::table('transaksi_kas')->where('akun_lawan_id', $oldId)->update(['akun_lawan_id' => $dup->keeper_id]);
+                }
 
                 // neraca_saldo: gabungkan saldo lalu hapus duplikat
                 $neracaRows = DB::table('neraca_saldo')->where('akun_id', $oldId)->get();
@@ -83,6 +90,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (Schema::hasColumn('akun', 'desa_id')) {
+            return; // sudah punya desa_id, tidak perlu rollback
+        }
+
         Schema::table('akun', function (Blueprint $table) {
             $table->dropUnique(['kode_akun']);
         });

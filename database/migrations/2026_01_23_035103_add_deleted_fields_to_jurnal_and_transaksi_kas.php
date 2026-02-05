@@ -17,9 +17,9 @@ return new class extends Migration
             $table->text('deleted_reason')->nullable()->after('deleted_by');
         });
 
-        // Add deleted_by and deleted_reason to transaksi_kas table
+        // Add deleted_by and deleted_reason to transaksi_kas table (transaksi_kas tidak punya deleted_at)
         Schema::table('transaksi_kas', function (Blueprint $table) {
-            $table->foreignId('deleted_by')->nullable()->after('deleted_at')->constrained('users')->nullOnDelete();
+            $table->foreignId('deleted_by')->nullable()->after('updated_at')->constrained('users')->nullOnDelete();
             $table->text('deleted_reason')->nullable()->after('deleted_by');
         });
     }
